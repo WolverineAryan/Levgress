@@ -4,6 +4,7 @@ const auth = require("../middleware/auth.middleware");
 const role = require("../middleware/role.middleware");
 const skillController = require("../controllers/skill.controller");
 const { body } = require("express-validator");
+const validate = require("../middleware/validate");
 
 // Student routes
 router.post(

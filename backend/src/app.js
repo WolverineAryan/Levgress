@@ -10,6 +10,8 @@ const analyticsRoutes = require("./routes/analytics.routes");
 const alertRoutes = require("./routes/alert.routes");
 const errorHandler = require("./middleware/error.middleware");
 const rateLimit = require("./middleware/rateLimit");
+const validate = require("../middleware/validate");
+
 const app = express();
 
 
