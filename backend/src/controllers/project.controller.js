@@ -89,36 +89,29 @@ exports.updateProgress = async (req, res) => {
 exports.completeProject = async (req, res) => {
   try {
     const project = await Project.findByIdAndUpdate(
-      req.params.projectId,
-      {
-        isCompleted: true,
-        phase: "COMPLETED",
-        completedAt: new Date()
-      },
-      { new: true }
+      req.params.id,
+      { status: "COMPLETED" },
+      { returnDocument: "after" }
     );
 
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    await StudentStats.findOneAndUpdate(
-      { studentId: project.studentId },
-      {
-        $inc: { completedProjectsCount: 1 },
-        lastActivityAt: new Date()
-      }
-    );
+    // Real-time emit
+    req.app.get("io").emit("project-updated", {
+      projectId: project._id,
+      status: "COMPLETED"
+    });
 
     res.json(project);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to complete project" });
-  }
-  eventBus.emit(EVENTS.PROJECT_COMPLETED, {
-  studentId: project.studentId
-});
 
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
 };
+
 
 // Get my projects (Student)
 exports.getMyProjects = async (req, res) => {
@@ -130,4 +123,76 @@ exports.getMyProjects = async (req, res) => {
 exports.getStudentProjects = async (req, res) => {
   const projects = await Project.find({ studentId: req.params.id });
   res.json(projects);
+};
+
+exports.getProjectComments = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate("comments.user", "name");
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    res.json(project.comments || []);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.addComment = async (req, res) => {
+  const project = await Project.findById(req.params.id)
+    .populate("comments.user", "name");
+
+  const comment = {
+    user: req.user.id,
+    text: req.body.text,
+    createdAt: new Date()
+  };
+
+  project.comments.push(comment);
+  await project.save();
+
+  const newComment = project.comments[project.comments.length - 1];
+
+  // Emit real-time event
+  req.app.get("io")
+    .to(req.params.id)
+    .emit("new-comment", newComment);
+
+  res.json(newComment);
+};
+
+exports.addProjectComment = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const newComment = {
+      user: req.user.id,
+      text: req.body.text,
+      createdAt: new Date()
+    };
+
+    project.comments.push(newComment);
+    await project.save();
+
+    const populatedProject = await Project.findById(req.params.id)
+      .populate("comments.user", "name");
+
+    const latestComment =
+      populatedProject.comments[populatedProject.comments.length - 1];
+
+    // Real-time emit
+    req.app.get("io")
+      .to(req.params.id)
+      .emit("new-comment", latestComment);
+
+    res.json(latestComment);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };

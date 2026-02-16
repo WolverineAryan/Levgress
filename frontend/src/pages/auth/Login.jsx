@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Link} from "react-router-dom";
 import api from "../../api/axios";
 import socket from "../../socket/socket";
 
@@ -102,6 +102,9 @@ export default function Login() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+        <Link to="/signup" className="text-indigo-400 hover:text-indigo-300">
+          Create account
+        </Link>
 
         <p className="text-xs text-zinc-500 mt-6 text-center">
           © Levgress Platform

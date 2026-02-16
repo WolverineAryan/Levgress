@@ -2,6 +2,7 @@ const StudentSkill = require("../models/StudentSkill");
 const StudentStats = require("../models/StudentStats");
 const eventBus = require("../events/dispatcher");
 const EVENTS = require("../events/constants");
+const MasterSkill = require("../models/MasterSkill");
 
 // Add skill to student
 exports.addSkill = async (req, res) => {
@@ -83,4 +84,14 @@ exports.getStudentSkills = async (req, res) => {
   const skills = await StudentSkill.find({ studentId: req.params.id })
     .populate("skillId");
   res.json(skills);
+};
+
+// Get master skills
+exports.getMasterSkills = async (req, res) => {
+  try {
+    const skills = await MasterSkill.find().sort({ name: 1 });
+    res.json(skills);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
