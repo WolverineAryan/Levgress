@@ -10,9 +10,7 @@ import {
 export default function LevelChart({ data }) {
   return (
     <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
-      <h3 className="mb-4 font-medium text-white">
-        Level Distribution
-      </h3>
+      <h3 className="mb-4 font-medium">Level Distribution</h3>
 
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={data}>

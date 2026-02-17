@@ -11,6 +11,7 @@ import Projects from "./pages/student/Projects";
 import Badges from "./pages/student/Badges";
 import ToastProvider from "./components/notifications/ToastProvider";
 import ProjectReview from "./pages/staff/ProjectReview";
+import StaffAnalytics from "./pages/staff/StaffAnalytics";
 
 export default function App() {
   return (
@@ -89,6 +90,19 @@ export default function App() {
         />
 
         <Route
+          path="/staff/analytics"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRole="STAFF">
+                <Layout>
+                  <StaffAnalytics />
+                </Layout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/staff/projects"
           element={
             <ProtectedRoute>
@@ -98,7 +112,8 @@ export default function App() {
                 </Layout>
               </RoleGuard>
             </ProtectedRoute>
-            }/>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

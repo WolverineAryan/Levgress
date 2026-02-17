@@ -11,6 +11,30 @@ export default function StaffDashboard() {
   const [selectedStudent, setSelectedStudent] = useState("");
   const [studentAnalytics, setStudentAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
+
+  /* =========================
+     OVERVIEW ANALYTICS
+  ========================== */
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await api.get("/analytics/overview");
+        setAnalytics(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
+  /* =========================
+     ALERTS
+  ========================== */
+  useEffect(() => {
+    fetchAlerts();
+  }, []);
 
   const fetchAlerts = async () => {
     try {
@@ -21,6 +45,9 @@ export default function StaffDashboard() {
     }
   };
 
+  /* =========================
+     BATCH ANALYTICS
+  ========================== */
   const fetchBatchAnalytics = async () => {
     if (!batch) return;
     setLoading(true);
@@ -33,6 +60,9 @@ export default function StaffDashboard() {
     setLoading(false);
   };
 
+  /* =========================
+     DEPARTMENT ANALYTICS
+  ========================== */
   const fetchDeptAnalytics = async () => {
     if (!department) return;
     setLoading(true);
@@ -45,6 +75,9 @@ export default function StaffDashboard() {
     setLoading(false);
   };
 
+  /* =========================
+     STUDENT ANALYTICS
+  ========================== */
   const fetchStudentAnalytics = async () => {
     if (!selectedStudent) return;
     setLoading(true);
@@ -56,19 +89,34 @@ export default function StaffDashboard() {
     }
     setLoading(false);
   };
-  {batchAnalytics?.levelDistribution && (
-    <LevelChart data={batchAnalytics.levelDistribution} />
-)}
-
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-8">
-      <h1 className="text-3xl font-semibold mb-8">Staff Dashboard</h1>
+    <div className="min-h-screen bg-zinc-950 text-white p-8 space-y-10">
+      <h1 className="text-3xl font-semibold">Staff Dashboard</h1>
 
-      {/* ALERT SECTION */}
+      {/* =========================
+         OVERVIEW SECTION
+      ========================== */}
+      {analytics && (
+        <Section title="Platform Overview">
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <StatCard title="Total Students" value={analytics.totalStudents} />
+            <StatCard title="Average Level" value={analytics.avgLevel} />
+            <StatCard
+              title="Completed Projects"
+              value={analytics.projectStatus?.completed}
+            />
+          </div>
+
+          {analytics.levelDistribution && (
+            <LevelChart data={analytics.levelDistribution} />
+          )}
+        </Section>
+      )}
+
+      {/* =========================
+         STAGNATION ALERTS
+      ========================== */}
       <Section title="Stagnation Alerts">
         <div className="space-y-3">
           {alerts.length === 0 && (
@@ -105,69 +153,58 @@ export default function StaffDashboard() {
         </div>
       </Section>
 
-      {/* BATCH ANALYTICS */}
+      {/* =========================
+         BATCH ANALYTICS
+      ========================== */}
       <Section title="Batch Analytics">
-        <div className="flex gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Enter batch (e.g. 2023-2027)"
-            value={batch}
-            onChange={(e) => setBatch(e.target.value)}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2"
-          />
-          <button
-            onClick={fetchBatchAnalytics}
-            className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg"
-          >
-            Load
-          </button>
-        </div>
+        <InputLoader
+          value={batch}
+          setValue={setBatch}
+          placeholder="Enter batch (e.g. 2023-2027)"
+          onClick={fetchBatchAnalytics}
+        />
 
         {batchAnalytics && (
-          <AnalyticsCard data={batchAnalytics} />
+          <>
+            <AnalyticsCard data={batchAnalytics} />
+            {batchAnalytics.levelDistribution && (
+              <LevelChart data={batchAnalytics.levelDistribution} />
+            )}
+          </>
         )}
       </Section>
 
-      {/* DEPARTMENT ANALYTICS */}
+      {/* =========================
+         DEPARTMENT ANALYTICS
+      ========================== */}
       <Section title="Department Analytics">
-        <div className="flex gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Enter department (e.g. CSE)"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2"
-          />
-          <button
-            onClick={fetchDeptAnalytics}
-            className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg"
-          >
-            Load
-          </button>
-        </div>
+        <InputLoader
+          value={department}
+          setValue={setDepartment}
+          placeholder="Enter department (e.g. CSE)"
+          onClick={fetchDeptAnalytics}
+        />
 
         {deptAnalytics && (
-          <AnalyticsCard data={deptAnalytics} />
+          <>
+            <AnalyticsCard data={deptAnalytics} />
+            {deptAnalytics.levelDistribution && (
+              <LevelChart data={deptAnalytics.levelDistribution} />
+            )}
+          </>
         )}
       </Section>
 
-      {/* STUDENT ANALYTICS */}
+      {/* =========================
+         STUDENT ANALYTICS
+      ========================== */}
       <Section title="Student Analytics">
-        <div className="flex gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Enter student ID"
-            value={selectedStudent}
-            onChange={(e) => setSelectedStudent(e.target.value)}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2"
-          />
-          <button
-            onClick={fetchStudentAnalytics}
-            className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg"
-          >
-            Load
-          </button>
-        </div>
+        <InputLoader
+          value={selectedStudent}
+          setValue={setSelectedStudent}
+          placeholder="Enter student ID"
+          onClick={fetchStudentAnalytics}
+        />
 
         {studentAnalytics && (
           <AnalyticsCard data={studentAnalytics} />
@@ -175,23 +212,54 @@ export default function StaffDashboard() {
       </Section>
 
       {loading && (
-        <p className="text-zinc-400 mt-4">Loading...</p>
+        <p className="text-zinc-400">Loading...</p>
       )}
     </div>
   );
 }
 
-/* Reusable Section */
+/* =========================
+   REUSABLE COMPONENTS
+========================= */
+
 function Section({ title, children }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
-      <h2 className="text-xl font-medium mb-4">{title}</h2>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+      <h2 className="text-xl font-medium mb-6">{title}</h2>
       {children}
     </div>
   );
 }
 
-/* Analytics Card */
+function StatCard({ title, value }) {
+  return (
+    <div className="bg-zinc-800 p-6 rounded-xl">
+      <p className="text-sm text-zinc-400">{title}</p>
+      <p className="text-2xl font-semibold mt-2">{value}</p>
+    </div>
+  );
+}
+
+function InputLoader({ value, setValue, placeholder, onClick }) {
+  return (
+    <div className="flex gap-4 mb-4">
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 flex-1"
+      />
+      <button
+        onClick={onClick}
+        className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg"
+      >
+        Load
+      </button>
+    </div>
+  );
+}
+
 function AnalyticsCard({ data }) {
   return (
     <div className="grid md:grid-cols-3 gap-6 mt-4">
@@ -204,7 +272,9 @@ function AnalyticsCard({ data }) {
             {key}
           </p>
           <p className="text-lg font-semibold mt-2">
-            {String(value)}
+            {typeof value === "object"
+              ? JSON.stringify(value)
+              : String(value)}
           </p>
         </div>
       ))}

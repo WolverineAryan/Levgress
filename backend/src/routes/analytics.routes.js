@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require("../middleware/auth.middleware");
 const role = require("../middleware/role.middleware");
 const controller = require("../controllers/analytics.controller");
+const { getOverviewAnalytics } = require("../controllers/analytics.controller");
 
 router.get(
   "/student/:id",
@@ -10,6 +11,8 @@ router.get(
   role("STAFF"),
   controller.studentAnalytics
 );
+
+router.get("/overview", auth, getOverviewAnalytics);
 
 router.get(
   "/batch/:batch",
