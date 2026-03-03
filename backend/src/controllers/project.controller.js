@@ -4,6 +4,7 @@ const StudentStats = require("../models/StudentStats");
 const User = require("../models/User");
 const Badge = require("../models/Badge");
 const XpHistory = require("../models/XpHistory");
+const updateStreak = require("../utils/updateStreak");
 
 /* ===============================
    CREATE PROJECT (Student)
@@ -17,7 +18,7 @@ exports.createProject = async (req, res) => {
 
     await StudentStats.findOneAndUpdate(
       { studentId: req.user._id },
-      { lastActivityAt: new Date() },
+      { lastActivityAt: new Date() }
     );
 
     res.status(201).json(project);
@@ -54,7 +55,7 @@ exports.approveMilestone = async (req, res) => {
         approvedBy: req.user._id,
         approvedAt: new Date(),
       },
-      { new: true },
+      { new: true }
     );
 
     if (!milestone) {
@@ -75,7 +76,7 @@ exports.updateProgress = async (req, res) => {
     const project = await Project.findOneAndUpdate(
       { _id: req.params.projectId, studentId: req.user._id },
       req.body,
-      { new: true },
+      { new: true }
     );
 
     if (!project) {
@@ -84,7 +85,7 @@ exports.updateProgress = async (req, res) => {
 
     await StudentStats.findOneAndUpdate(
       { studentId: req.user._id },
-      { lastActivityAt: new Date() },
+      { lastActivityAt: new Date() }
     );
 
     res.json(project);
@@ -95,15 +96,17 @@ exports.updateProgress = async (req, res) => {
 
 /* ===============================
    COMPLETE PROJECT (Staff)
-   + XP + LEVEL + BADGE SYSTEM
+   + XP + LEVEL + STREAK + BADGE
 ================================ */
 exports.completeProject = async (req, res) => {
   try {
-    // 1️⃣ Mark project as completed
+    const io = req.app.get("io");
+
+    // 1️⃣ Mark project completed
     const project = await Project.findByIdAndUpdate(
       req.params.id,
       { status: "COMPLETED" },
-      { returnDocument: "after" },
+      { returnDocument: "after" }
     );
 
     if (!project) {
@@ -116,40 +119,39 @@ exports.completeProject = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // 3️⃣ Store previous level
     const previousLevel = student.level || 1;
 
-    // 4️⃣ Add XP
+    // 3️⃣ Base XP
     student.xp = (student.xp || 0) + 50;
-
-    // 5️⃣ Recalculate level
     student.level = Math.floor(student.xp / 100) + 1;
 
     await student.save();
 
-    // 6️⃣ Level Badge Mapping
+    // 4️⃣ Level Badge Mapping
     const levelBadges = {
       5: "Level 5 Achiever",
       10: "Level 10 Master",
       20: "Elite Performer",
     };
 
-    // 7️⃣ Award badge if leveled up
     if (student.level > previousLevel && levelBadges[student.level]) {
-      const existingBadge = await Badge.findOne({
+      const existing = await Badge.findOne({
         userId: student._id,
         title: levelBadges[student.level],
       });
 
-      if (!existingBadge) {
+      if (!existing) {
         await Badge.create({
           userId: student._id,
           title: levelBadges[student.level],
           description: `Reached Level ${student.level}`,
         });
+
+        io.to(student._id.toString()).emit("badge-earned");
       }
     }
 
+    // 5️⃣ XP History (Base XP)
     await XpHistory.create({
       studentId: student._id,
       xpChange: 50,
@@ -157,18 +159,36 @@ exports.completeProject = async (req, res) => {
       reason: "Project Approved",
     });
 
-    // 8️⃣ Real-time emit
-    req.app.get("io").emit("project-updated", {
+    // 🔥 6️⃣ Update Streak (Includes Bonus XP + Badge)
+    const streakData = await updateStreak(student._id);
+
+    if (streakData) {
+      io.to(student._id.toString()).emit("streak-update", streakData);
+
+      // If streak bonus gave XP → refresh dashboard
+      if (streakData.bonusXP > 0) {
+        io.to(student._id.toString()).emit("level-up");
+      }
+
+      // If streak badge awarded
+      if (streakData.badgeAwarded) {
+        io.to(student._id.toString()).emit("badge-earned");
+      }
+    }
+
+    // 7️⃣ Notify project update
+    io.emit("project-updated", {
       projectId: project._id,
       status: "COMPLETED",
     });
 
     res.json({
-      message: "Project completed. XP updated.",
+      message: "Project completed. XP, level & streak updated.",
       project,
       newLevel: student.level,
       xp: student.xp,
     });
+
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: err.message });
@@ -198,7 +218,7 @@ exports.getProjectComments = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id).populate(
       "comments.user",
-      "name",
+      "name"
     );
 
     if (!project) {
@@ -208,6 +228,54 @@ exports.getProjectComments = async (req, res) => {
     res.json(project.comments || []);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ===============================
+   STREAK RECOVERY (Student)
+================================ */
+exports.recoverStreak = async (req, res) => {
+  try {
+    const studentId = req.user._id;
+    const io = req.app.get("io");
+
+    const stats = await StudentStats.findOne({ studentId });
+    const user = await User.findById(studentId);
+
+    if (!stats.recoveryAvailable) {
+      return res.status(400).json({ message: "Recovery not available" });
+    }
+
+    if (user.xp < 30) {
+      return res.status(400).json({ message: "Not enough XP" });
+    }
+
+    // Deduct XP
+    user.xp -= 30;
+    user.level = Math.floor(user.xp / 100) + 1;
+    await user.save();
+
+    await XpHistory.create({
+      studentId,
+      xpChange: -30,
+      totalXpAfter: user.xp,
+      reason: "Streak Recovery",
+    });
+
+    // Restore streak
+    stats.currentStreak = stats.previousStreak;
+    stats.recoveryAvailable = false;
+    await stats.save();
+
+    io.to(studentId.toString()).emit("streak-update", {
+      currentStreak: stats.currentStreak,
+      longestStreak: stats.longestStreak,
+    });
+
+    res.json({ message: "Streak recovered successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -233,7 +301,7 @@ exports.addProjectComment = async (req, res) => {
 
     const populatedProject = await Project.findById(req.params.id).populate(
       "comments.user",
-      "name",
+      "name"
     );
 
     const latestComment =
@@ -242,6 +310,7 @@ exports.addProjectComment = async (req, res) => {
     req.app.get("io").to(req.params.id).emit("new-comment", latestComment);
 
     res.json(latestComment);
+
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

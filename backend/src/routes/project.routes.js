@@ -38,6 +38,7 @@ router.post(
 
 router.get("/:id/comments", auth, getProjectComments);
 router.post("/:id/comment", auth, addProjectComment);
+router.post("/streak/recover", protect, recoverStreak);
 
 // Public / staff
 router.get(

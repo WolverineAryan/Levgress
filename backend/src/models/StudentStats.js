@@ -52,7 +52,9 @@ const studentStatsSchema = new mongoose.Schema(
     lastActiveDate: {
       type: Date,
     },
-    
+
+    activityDates: [Date],
+
   },
   { timestamps: true },
 );

@@ -25,7 +25,7 @@ app.use(rateLimit);
 // ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/stats", statsRoutes);
-app.use("/api/skills", skillRoutes);
+app.use("/api/skill", skillRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/badges", badgeRoutes);
 app.use("/api/activity", activityRoutes);

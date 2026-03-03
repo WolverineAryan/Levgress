@@ -1,40 +1,56 @@
 const StudentSkill = require("../models/StudentSkill");
 const StudentStats = require("../models/StudentStats");
+const MasterSkill = require("../models/MasterSkill");
 const eventBus = require("../events/dispatcher");
 const EVENTS = require("../events/constants");
-const MasterSkill = require("../models/MasterSkill");
 
-// Add skill to student
+/* ===============================
+   ADD SKILL (Student)
+================================ */
 exports.addSkill = async (req, res) => {
   try {
     const { skillId, level } = req.body;
 
-    const skill = await Skill.findById(skillId);
-    if (!skill) {
+    // ✅ Validate MasterSkill exists
+    const masterSkill = await MasterSkill.findById(skillId);
+    if (!masterSkill) {
       return res.status(404).json({ message: "Skill not found" });
+    }
+
+    // ✅ Prevent duplicate
+    const existing = await StudentSkill.findOne({
+      studentId: req.user._id,
+      skillId,
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: "Skill already added" });
     }
 
     const studentSkill = await StudentSkill.create({
       studentId: req.user._id,
       skillId,
-      level
+      level,
+      status: "IN_PROGRESS", // default
     });
 
+    // Update activity timestamp
     await StudentStats.findOneAndUpdate(
       { studentId: req.user._id },
       { lastActivityAt: new Date() }
     );
 
     res.status(201).json(studentSkill);
+
   } catch (err) {
-    if (err.code === 11000) {
-      return res.status(400).json({ message: "Skill already added" });
-    }
+    console.error(err);
     res.status(500).json({ message: "Failed to add skill" });
   }
 };
 
-// Update skill status or level
+/* ===============================
+   UPDATE SKILL
+================================ */
 exports.updateSkill = async (req, res) => {
   try {
     const { status, level, evidenceUrl } = req.body;
@@ -49,44 +65,63 @@ exports.updateSkill = async (req, res) => {
       return res.status(404).json({ message: "Skill not found" });
     }
 
-    // If marked as LEARNED, increment stats once
+    // If marked LEARNED → increment stats once
     if (status === "LEARNED") {
       await StudentStats.findOneAndUpdate(
         { studentId: req.user._id },
         {
           $inc: { learnedSkillsCount: 1 },
-          lastActivityAt: new Date()
+          lastActivityAt: new Date(),
         }
       );
-    }
-    if (status === "LEARNED") {
-    eventBus.emit(EVENTS.SKILL_LEARNED, {
-        studentId: req.user._id
-    });
-    }
 
+      // Emit event
+      eventBus.emit(EVENTS.SKILL_LEARNED, {
+        studentId: req.user._id,
+      });
+    }
 
     res.json(studentSkill);
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to update skill" });
   }
 };
 
-// Get my skills
+/* ===============================
+   GET MY SKILLS
+================================ */
 exports.getMySkills = async (req, res) => {
-  const skills = await StudentSkill.find({ studentId: req.user._id })
-    .populate("skillId");
-  res.json(skills);
+  try {
+    const skills = await StudentSkill.find({
+      studentId: req.user._id,
+    }).populate("skillId");
+
+    res.json(skills);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// Get public skills of a student (peer/staff view)
+/* ===============================
+   GET STUDENT SKILLS (Public/Staff)
+================================ */
 exports.getStudentSkills = async (req, res) => {
-  const skills = await StudentSkill.find({ studentId: req.params.id })
-    .populate("skillId");
-  res.json(skills);
+  try {
+    const skills = await StudentSkill.find({
+      studentId: req.params.id,
+    }).populate("skillId");
+
+    res.json(skills);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// Get master skills
+/* ===============================
+   GET MASTER SKILLS
+================================ */
 exports.getMasterSkills = async (req, res) => {
   try {
     const skills = await MasterSkill.find().sort({ name: 1 });

@@ -1,5 +1,8 @@
 const User = require("../models/User");
 
+/* ===============================
+   GET ALL STUDENTS (Staff)
+================================ */
 exports.getStudents = async (req, res) => {
   try {
     const students = await User.find({ role: "STUDENT" })
