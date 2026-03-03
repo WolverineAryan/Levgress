@@ -11,7 +11,7 @@ import Projects from "./pages/student/Projects";
 import Badges from "./pages/student/Badges";
 import ToastProvider from "./components/notifications/ToastProvider";
 import ProjectReview from "./pages/staff/ProjectReview";
-import StaffAnalytics from "./pages/staff/StaffAnalytics";
+import Leaderboard from "./pages/student/Leaderboard";
 
 export default function App() {
   return (
@@ -75,6 +75,19 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/student/leaderboard"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRole="STUDENT">
+                <Layout>
+                  <Leaderboard />
+                </Layout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+
         {/* Staff */}
         <Route
           path="/staff"
@@ -83,19 +96,6 @@ export default function App() {
               <RoleGuard allowedRole="STAFF">
                 <Layout>
                   <StaffDashboard />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/staff/analytics"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STAFF">
-                <Layout>
-                  <StaffAnalytics />
                 </Layout>
               </RoleGuard>
             </ProtectedRoute>

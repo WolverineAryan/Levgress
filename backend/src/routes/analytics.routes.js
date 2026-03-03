@@ -11,8 +11,8 @@ router.get(
   role("STAFF"),
   controller.studentAnalytics
 );
-
-router.get("/overview", auth, getOverviewAnalytics);
+router.get("/trend", auth,role("STAFF"), controller.monthlyProjectTrend);
+router.get("/overview", getOverviewAnalytics);
 
 router.get(
   "/batch/:batch",

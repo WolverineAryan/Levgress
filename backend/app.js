@@ -12,6 +12,8 @@ const alertRoutes = require("./src/routes/alert.routes");
 const userRoutes = require("./src/routes/user.routes");
 const errorHandler = require("./src/middleware/error.middleware");
 const rateLimit = require("./src/middleware/rateLimit");
+const leaderboardRoutes = require("./src/routes/leaderboard.routes");
+const xpRoutes = require("./src/routes/xp.routes");
 
 const app = express();
 
@@ -30,6 +32,8 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/xp", xpRoutes);
 
 // HEALTH CHECK
 app.get("/api/health", (req, res) => {

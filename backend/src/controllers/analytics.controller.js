@@ -17,6 +17,38 @@ exports.departmentAnalytics = async (req, res) => {
   res.json(data);
 };
 
+exports.monthlyProjectTrend = async (req, res) => {
+  try {
+    const trend = await Project.aggregate([
+      {
+        $match: { status: "COMPLETED" }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$updatedAt" },
+            month: { $month: "$updatedAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 }
+      }
+    ]);
+
+    const formatted = trend.map(t => ({
+      month: `${t._id.month}/${t._id.year}`,
+      completed: t.count
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Trend error" });
+  }
+};
+
 exports.getOverviewAnalytics = async (req, res) => {
   try {
     const students = await User.find({ role: "STUDENT" });

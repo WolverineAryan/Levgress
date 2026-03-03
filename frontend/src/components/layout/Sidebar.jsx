@@ -7,16 +7,15 @@ export default function Sidebar() {
     { name: "Dashboard", path: "/student" },
     { name: "Skills", path: "/student/skills" },
     { name: "Projects", path: "/student/projects" },
-    { name: "Badges", path: "/student/badges" }
+    { name: "Badges", path: "/student/badges" },
+    { name: "Leaderboard", path: "/student/leaderboard" }
   ];
 
   const staffLinks = [
   { name: "Dashboard", path: "/staff" },
   { name: "Project Review", path: "/staff/projects" },
-  { name: "Analytics", path: "/staff/analytics" },
   { name: "Alerts", path: "/staff/alerts" }
 ];
-
 
   const links = role === "STAFF" ? staffLinks : studentLinks;
 
