@@ -4,22 +4,32 @@ const router = express.Router();
 const auth = require("../middleware/auth.middleware");
 const role = require("../middleware/role.middleware");
 const projectController = require("../controllers/project.controller");
-const {getProjectComments, addProjectComment} = require("../controllers/project.controller");
 
 // Student
 router.post("/", auth, role("STUDENT"), projectController.createProject);
+
 router.get("/me", auth, role("STUDENT"), projectController.getMyProjects);
+
 router.put(
   "/:projectId/progress",
   auth,
   role("STUDENT"),
   projectController.updateProgress
 );
+
 router.post(
   "/:projectId/milestones",
   auth,
   role("STUDENT"),
   projectController.addMilestone
+);
+
+// 🔥 Streak Recovery
+router.post(
+  "/streak/recover",
+  auth,
+  role("STUDENT"),
+  projectController.recoverStreak
 );
 
 // Staff
@@ -29,6 +39,7 @@ router.post(
   role("STAFF"),
   projectController.approveMilestone
 );
+
 router.post(
   "/:projectId/complete",
   auth,
@@ -36,9 +47,9 @@ router.post(
   projectController.completeProject
 );
 
-router.get("/:id/comments", auth, getProjectComments);
-router.post("/:id/comment", auth, addProjectComment);
-router.post("/streak/recover", protect, recoverStreak);
+// Comments
+router.get("/:id/comments", auth, projectController.getProjectComments);
+router.post("/:id/comment", auth, projectController.addProjectComment);
 
 // Public / staff
 router.get(

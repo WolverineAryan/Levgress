@@ -15,7 +15,7 @@ const xpHistorySchema = new mongoose.Schema({
     required: true,
   },
   reason: {
-    type: String,
+    type: String,   
   },
 }, { timestamps: true });
 

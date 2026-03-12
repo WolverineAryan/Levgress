@@ -14,9 +14,10 @@ const milestoneSchema = new mongoose.Schema({
 
   description: String,
 
-  isApproved: {
-    type: Boolean,
-    default: false
+  status: {
+    type: String,
+    enum: ["PENDING", "COMPLETED", "APPROVED", "REJECTED"],
+    default: "PENDING"
   },
 
   approvedBy: {
@@ -25,6 +26,7 @@ const milestoneSchema = new mongoose.Schema({
   },
 
   approvedAt: Date
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("ProjectMilestone", milestoneSchema);

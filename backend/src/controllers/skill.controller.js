@@ -11,13 +11,13 @@ exports.addSkill = async (req, res) => {
   try {
     const { skillId, level } = req.body;
 
-    // ✅ Validate MasterSkill exists
+    // Validate master skill exists
     const masterSkill = await MasterSkill.findById(skillId);
     if (!masterSkill) {
       return res.status(404).json({ message: "Skill not found" });
     }
 
-    // ✅ Prevent duplicate
+    // Prevent duplicate skill
     const existing = await StudentSkill.findOne({
       studentId: req.user._id,
       skillId,
@@ -31,10 +31,9 @@ exports.addSkill = async (req, res) => {
       studentId: req.user._id,
       skillId,
       level,
-      status: "IN_PROGRESS", // default
+      status: "IN_PROGRESS",
     });
 
-    // Update activity timestamp
     await StudentStats.findOneAndUpdate(
       { studentId: req.user._id },
       { lastActivityAt: new Date() }
@@ -43,8 +42,8 @@ exports.addSkill = async (req, res) => {
     res.status(201).json(studentSkill);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to add skill" });
+    console.error("ADD SKILL ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -65,7 +64,6 @@ exports.updateSkill = async (req, res) => {
       return res.status(404).json({ message: "Skill not found" });
     }
 
-    // If marked LEARNED → increment stats once
     if (status === "LEARNED") {
       await StudentStats.findOneAndUpdate(
         { studentId: req.user._id },
@@ -75,7 +73,6 @@ exports.updateSkill = async (req, res) => {
         }
       );
 
-      // Emit event
       eventBus.emit(EVENTS.SKILL_LEARNED, {
         studentId: req.user._id,
       });
@@ -84,8 +81,8 @@ exports.updateSkill = async (req, res) => {
     res.json(studentSkill);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to update skill" });
+    console.error("UPDATE SKILL ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -99,13 +96,15 @@ exports.getMySkills = async (req, res) => {
     }).populate("skillId");
 
     res.json(skills);
+
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("GET MY SKILLS ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
 /* ===============================
-   GET STUDENT SKILLS (Public/Staff)
+   GET STUDENT SKILLS
 ================================ */
 exports.getStudentSkills = async (req, res) => {
   try {
@@ -114,8 +113,10 @@ exports.getStudentSkills = async (req, res) => {
     }).populate("skillId");
 
     res.json(skills);
+
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("GET STUDENT SKILLS ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -126,7 +127,9 @@ exports.getMasterSkills = async (req, res) => {
   try {
     const skills = await MasterSkill.find().sort({ name: 1 });
     res.json(skills);
+
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("GET MASTER SKILLS ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };

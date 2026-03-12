@@ -33,7 +33,7 @@ export default function Skills() {
     try {
       await api.post("/skills", {
         skillId: selectedSkill,
-        level
+        level,
       });
 
       fetchSkills();
@@ -45,9 +45,9 @@ export default function Skills() {
     setLoading(false);
   };
 
-  const updateSkill = async (id, newLevel) => {
+  const updateSkill = async (id, data) => {
     try {
-      await api.put(`/skills/${id}`, { level: newLevel });
+      await api.put(`/skills/${id}`, data);
       fetchSkills();
     } catch (err) {
       console.error(err);
@@ -63,7 +63,7 @@ export default function Skills() {
     <div>
       <h1 className="text-2xl font-semibold mb-6">My Skills</h1>
 
-      {/* ADD SKILL SECTION */}
+      {/* ADD SKILL */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
         <h2 className="text-lg font-medium mb-4">Add Skill</h2>
 
@@ -74,6 +74,7 @@ export default function Skills() {
             className="bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg"
           >
             <option value="">Select Skill</option>
+
             {masterSkills.map((skill) => (
               <option key={skill._id} value={skill._id}>
                 {skill.name}
@@ -101,39 +102,70 @@ export default function Skills() {
         </div>
       </div>
 
-      {/* SKILL LIST */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* SKILLS GRID */}
+      <div className="grid md:grid-cols-3 gap-6">
         {skills.map((skill) => (
-          <div
+          <SkillCard
             key={skill._id}
-            className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl"
-          >
-            <h3 className="font-semibold text-lg mb-2">
-              {skill.skillId?.name}
-            </h3>
-
-            <p className="text-sm text-zinc-400 mb-4">
-              Current Level: {skill.level}
-            </p>
-
-            <div className="flex gap-3">
-              {["BEGINNER", "INTERMEDIATE", "ADVANCED"].map((lvl) => (
-                <button
-                  key={lvl}
-                  onClick={() => updateSkill(skill._id, lvl)}
-                  className={`px-3 py-1 rounded-lg text-xs ${
-                    skill.level === lvl
-                      ? "bg-indigo-600 text-white"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
-                  }`}
-                >
-                  {lvl}
-                </button>
-              ))}
-            </div>
-          </div>
+            skill={skill}
+            updateSkill={updateSkill}
+          />
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ===============================
+   EDITABLE SKILL CARD
+================================ */
+
+function SkillCard({ skill, updateSkill }) {
+  const [editing, setEditing] = useState(false);
+  const [level, setLevel] = useState(skill.level);
+
+  const saveLevel = async () => {
+    await updateSkill(skill._id, { level });
+    setEditing(false);
+  };
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
+      
+      {/* Skill Name */}
+      <h3 className="text-lg font-semibold mb-3">
+        {skill.skillId?.name}
+      </h3>
+
+      {/* Level */}
+      {!editing ? (
+        <p
+          onClick={() => setEditing(true)}
+          className="text-zinc-400 cursor-pointer"
+        >
+          Level: {skill.level}
+        </p>
+      ) : (
+        <div className="flex gap-2">
+          <select
+            value={level}
+            onChange={(e) => setLevel(e.target.value)}
+            className="bg-zinc-800 border border-zinc-700 px-3 py-1 rounded"
+          >
+            <option value="BEGINNER">Beginner</option>
+            <option value="INTERMEDIATE">Intermediate</option>
+            <option value="ADVANCED">Advanced</option>
+          </select>
+
+          <button
+            onClick={saveLevel}
+            className="bg-indigo-600 px-3 py-1 rounded text-sm"
+          >
+            Save
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

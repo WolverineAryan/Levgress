@@ -8,14 +8,14 @@ const studentSkillSchema = new mongoose.Schema({
   },
   skillId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Skill",
+    ref: "MasterSkill",
     required: true
   },
-  skillId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "MasterSkill",
-    required: true,
-  },
+  // skillId: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "MasterSkill",
+  //   required: true
+  // },
   status: {
     type: String,
     enum: ["PLANNED", "IN_PROGRESS", "LEARNED"],

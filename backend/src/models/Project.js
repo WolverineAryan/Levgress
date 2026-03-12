@@ -42,6 +42,13 @@ const projectSchema = new mongoose.Schema(
       default: false,
     },
 
+    liveUrl: {
+      type: String,
+    },
+    githubUrl: {
+      type: String,
+    },
+
     comments: [
       {
         user: {

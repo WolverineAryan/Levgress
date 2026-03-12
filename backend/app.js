@@ -14,6 +14,7 @@ const errorHandler = require("./src/middleware/error.middleware");
 const rateLimit = require("./src/middleware/rateLimit");
 const leaderboardRoutes = require("./src/routes/leaderboard.routes");
 const xpRoutes = require("./src/routes/xp.routes");
+const milestoneRoutes = require("./src/routes/milestone.routes");
 
 const app = express();
 
@@ -25,7 +26,7 @@ app.use(rateLimit);
 // ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/stats", statsRoutes);
-app.use("/api/skill", skillRoutes);
+app.use("/api/skills", skillRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/badges", badgeRoutes);
 app.use("/api/activity", activityRoutes);
@@ -34,6 +35,7 @@ app.use("/api/alerts", alertRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/xp", xpRoutes);
+app.use("/api/milestones", milestoneRoutes);
 
 // HEALTH CHECK
 app.get("/api/health", (req, res) => {
