@@ -7,12 +7,32 @@ const role = require("../middleware/role.middleware");
 const milestone = require("../controllers/milestone.controller");
 
 /* STUDENT */
-router.post("/:projectId", auth, role("STUDENT"), milestone.addMilestone);
-router.get("/:projectId", auth, milestone.getMilestones);
-router.put("/:id/complete", auth, role("STUDENT"), milestone.completeMilestone);
 
-/* STAFF */
-router.put("/:id/approve", auth, role("STAFF"), milestone.approveMilestone);
-router.put("/:id/reject", auth, role("STAFF"), milestone.rejectMilestone);
+router.post(
+  "/:projectId",
+  auth,
+  role("STUDENT"),
+  milestone.addMilestone
+);
+
+router.get(
+  "/:projectId",
+  auth,
+  milestone.getMilestones
+);
+
+router.put(
+  "/:id/complete",
+  auth,
+  role("STUDENT"),
+  milestone.completeMilestone
+);
+
+router.put(
+  "/:id/evidence",
+  auth,
+  role("STUDENT"),
+  milestoneController.uploadEvidence
+);
 
 module.exports = router;

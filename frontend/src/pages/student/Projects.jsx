@@ -3,35 +3,80 @@ import api from "../../api/axios";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
-  const [editingId, setEditingId] = useState(null);
   const [milestones, setMilestones] = useState({});
+  const [editingId, setEditingId] = useState(null);
+
   const [form, setForm] = useState({
     title: "",
     description: "",
     liveUrl: "",
-    githubUrl: ""
+    githubUrl: "",
   });
 
   const [loading, setLoading] = useState(false);
+
+  /* ---------------- FETCH PROJECTS ---------------- */
 
   const fetchProjects = async () => {
     try {
       const res = await api.get("/projects/me");
       setProjects(res.data);
+
+      res.data.forEach((p) => fetchMilestones(p._id));
     } catch (err) {
       console.error(err);
     }
   };
+
+  /* ---------------- FETCH MILESTONES ---------------- */
+
   const fetchMilestones = async (projectId) => {
+    try {
+      const res = await api.get(`/milestones/${projectId}`);
 
-  const res = await api.get(`/milestones/${projectId}`);
+      setMilestones((prev) => ({
+        ...prev,
+        [projectId]: res.data,
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-  setMilestones(prev => ({
-    ...prev,
-    [projectId]: res.data
-  }));
+  /* ---------------- ADD MILESTONE ---------------- */
 
-}; 
+  const addMilestone = async (projectId, title) => {
+    if (!title) return;
+
+    try {
+      await api.post(`/milestones/${projectId}`, { title });
+
+      fetchMilestones(projectId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /* ---------------- COMPLETE MILESTONE ---------------- */
+
+  const completeMilestone = async (milestoneId, projectId) => {
+    try {
+      const res = await api.put(`/milestones/${milestoneId}/complete`);
+
+      fetchMilestones(projectId);
+
+      /* Badge notification */
+
+      if (res.data.badge) {
+        alert(`🏆 Badge Unlocked: ${res.data.badge.title}`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /* ---------------- CREATE PROJECT ---------------- */
+
   const createProject = async () => {
     if (!form.title) return;
 
@@ -44,7 +89,7 @@ export default function Projects() {
         title: "",
         description: "",
         liveUrl: "",
-        githubUrl: ""
+        githubUrl: "",
       });
 
       fetchProjects();
@@ -54,6 +99,8 @@ export default function Projects() {
 
     setLoading(false);
   };
+
+  /* ---------------- UPDATE PROJECT ---------------- */
 
   const updateProject = async () => {
     try {
@@ -65,7 +112,7 @@ export default function Projects() {
         title: "",
         description: "",
         liveUrl: "",
-        githubUrl: ""
+        githubUrl: "",
       });
 
       fetchProjects();
@@ -81,25 +128,27 @@ export default function Projects() {
       title: project.title,
       description: project.description,
       liveUrl: project.liveUrl || "",
-      githubUrl: project.githubUrl || ""
+      githubUrl: project.githubUrl || "",
     });
   };
 
-  const updateProgress = async (id, progress) => {
-  try {
-    await api.put(`/projects/${id}/progress`, {
-      progress: Number(progress)
-    });
+  /* ---------------- UPDATE PROGRESS ---------------- */
 
-    setProjects((prev) =>
-      prev.map((p) =>
-        p._id === id ? { ...p, progress } : p
-      )
-    );
-  } catch (err) {
-    console.error(err);
-  }
-};
+  const updateProgress = async (id, progress) => {
+    try {
+      await api.put(`/projects/${id}/progress`, {
+        progress: Number(progress),
+      });
+
+      setProjects((prev) =>
+        prev.map((p) => (p._id === id ? { ...p, progress } : p)),
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /* ---------------- LOAD DATA ---------------- */
 
   useEffect(() => {
     fetchProjects();
@@ -110,8 +159,8 @@ export default function Projects() {
       <h1 className="text-2xl font-semibold mb-6">My Projects</h1>
 
       {/* CREATE / EDIT PROJECT */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
 
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
         <h2 className="text-lg font-medium mb-4">
           {editingId ? "Edit Project" : "Create New Project"}
         </h2>
@@ -120,38 +169,28 @@ export default function Projects() {
           type="text"
           placeholder="Project Title"
           value={form.title}
-          onChange={(e) =>
-            setForm({ ...form, title: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <textarea
           placeholder="Description"
           value={form.description}
-          onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <input
-          type="text"
           placeholder="Live Project URL"
           value={form.liveUrl}
-          onChange={(e) =>
-            setForm({ ...form, liveUrl: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, liveUrl: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <input
-          type="text"
           placeholder="GitHub Repository URL"
           value={form.githubUrl}
-          onChange={(e) =>
-            setForm({ ...form, githubUrl: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, githubUrl: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
@@ -171,22 +210,20 @@ export default function Projects() {
             {loading ? "Creating..." : "Create Project"}
           </button>
         )}
-
       </div>
 
       {/* PROJECT LIST */}
+
       <div className="space-y-6">
         {projects.map((project) => (
           <div
             key={project._id}
             className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
           >
+            {/* TITLE */}
 
             <div className="flex justify-between items-center mb-3">
-
-              <h3 className="text-lg font-semibold">
-                {project.title}
-              </h3>
+              <h3 className="text-lg font-semibold">{project.title}</h3>
 
               <button
                 onClick={() => startEdit(project)}
@@ -194,16 +231,13 @@ export default function Projects() {
               >
                 Edit
               </button>
-
             </div>
 
-            <p className="text-sm text-zinc-400 mb-4">
-              {project.description}
-            </p>
+            <p className="text-sm text-zinc-400 mb-4">{project.description}</p>
 
             {/* LINKS */}
-            <div className="flex gap-4 mb-4 text-sm">
 
+            <div className="flex gap-4 mb-4 text-sm">
               {project.liveUrl && (
                 <a
                   href={project.liveUrl}
@@ -225,51 +259,67 @@ export default function Projects() {
                   GitHub Repo
                 </a>
               )}
-
             </div>
 
-            {/* PROGRESS BAR */}
-<div className="mb-4">
+            {/* PROGRESS */}
 
-  <div className="flex justify-between text-xs text-zinc-400 mb-1">
-    <span>Progress</span>
-    <span>{project.progress || 0}%</span>
-  </div>
-
-  <input
-    type="range"
-    min="0"
-    max="100"
-    value={project.progress || 0}
-    onChange={(e) =>
-      updateProgress(project._id, e.target.value)
-    }
-    className="w-full accent-indigo-600"
-  />
-
-</div>
-
-            {/* PROGRESS CONTROLS */}
-            {project.status !== "COMPLETED" && (
-              <div className="flex gap-3">
-                {[25, 50, 75, 100].map((value) => (
-                  <button
-                    key={value}
-                    onClick={() =>
-                      updateProgress(project._id, value)
-                    }
-                    className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs"
-                  >
-                    {value}%
-                  </button>
-                ))}
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                <span>Progress</span>
+                <span>{project.progress || 0}%</span>
               </div>
-            )}
 
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={project.progress || 0}
+                onChange={(e) => updateProgress(project._id, e.target.value)}
+                className="w-full accent-indigo-600"
+              />
+            </div>
+
+            {/* MILESTONES */}
+
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold mb-2">Milestones</h4>
+
+              {(milestones[project._id] || []).map((m) => (
+                <div
+                  key={m._id}
+                  className="flex justify-between items-center text-sm bg-zinc-800 p-2 rounded mb-2"
+                >
+                  <span>{m.title}</span>
+
+                  {m.status !== "COMPLETED" ? (
+                    <button
+                      onClick={() => completeMilestone(m._id, project._id)}
+                      className="bg-green-600 text-xs px-2 py-1 rounded"
+                    >
+                      Complete
+                    </button>
+                  ) : (
+                    <span className="text-xs text-green-400">Completed</span>
+                  )}
+                </div>
+              ))}
+
+              {/* ADD MILESTONE */}
+
+              <input
+                placeholder="Add milestone..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    addMilestone(project._id, e.target.value);
+                    e.target.value = "";
+                  }
+                }}
+                className="bg-zinc-800 px-3 py-2 rounded w-full mt-2"
+              />
+            </div>
           </div>
         ))}
       </div>
-
     </div>
   );
 }

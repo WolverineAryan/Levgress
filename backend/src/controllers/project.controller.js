@@ -5,26 +5,42 @@ const User = require("../models/User");
 const Badge = require("../models/Badge");
 const XpHistory = require("../models/XpHistory");
 const updateStreak = require("../utils/updateStreak");
+const awardXP = require("../services/xp.service");
 
 /* ===============================
    CREATE PROJECT (Student)
 ================================ */
+const DEFAULT_MILESTONES = [
+  "Idea / Planning",
+  "UI / Design",
+  "Development",
+  "Testing",
+  "Deployment"
+];
+
 exports.createProject = async (req, res) => {
+
   try {
+
     const project = await Project.create({
       studentId: req.user._id,
-      ...req.body,
+      ...req.body
     });
 
-    await StudentStats.findOneAndUpdate(
-      { studentId: req.user._id },
-      { lastActivityAt: new Date() }
-    );
+    // AUTO CREATE 5 MILESTONES
+    const milestones = DEFAULT_MILESTONES.map(title => ({
+      projectId: project._id,
+      title
+    }));
+
+    await ProjectMilestone.insertMany(milestones);
 
     res.status(201).json(project);
+
   } catch (err) {
-    res.status(500).json({ message: "Failed to create project" });
+    res.status(500).json({ message: err.message });
   }
+
 };
 
 /* ===============================
@@ -98,101 +114,40 @@ exports.updateProgress = async (req, res) => {
    COMPLETE PROJECT (Staff)
    + XP + LEVEL + STREAK + BADGE
 ================================ */
-exports.completeProject = async (req, res) => {
-  try {
-    const io = req.app.get("io");
 
-    // 1️⃣ Mark project completed
+
+exports.completeProject = async (req, res) => {
+
+  try {
+
     const project = await Project.findByIdAndUpdate(
-      req.params.id,
+      req.params.projectId,
       { status: "COMPLETED" },
-      { returnDocument: "after" }
+      { new: true }
     );
 
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // 2️⃣ Fetch student
-    const student = await User.findById(project.studentId);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
-
-    const previousLevel = student.level || 1;
-
-    // 3️⃣ Base XP
-    student.xp = (student.xp || 0) + 50;
-    student.level = Math.floor(student.xp / 100) + 1;
-
-    await student.save();
-
-    // 4️⃣ Level Badge Mapping
-    const levelBadges = {
-      5: "Level 5 Achiever",
-      10: "Level 10 Master",
-      20: "Elite Performer",
-    };
-
-    if (student.level > previousLevel && levelBadges[student.level]) {
-      const existing = await Badge.findOne({
-        userId: student._id,
-        title: levelBadges[student.level],
-      });
-
-      if (!existing) {
-        await Badge.create({
-          userId: student._id,
-          title: levelBadges[student.level],
-          description: `Reached Level ${student.level}`,
-        });
-
-        io.to(student._id.toString()).emit("badge-earned");
-      }
-    }
-
-    // 5️⃣ XP History (Base XP)
-    await XpHistory.create({
-      studentId: student._id,
-      xpChange: 50,
-      totalXpAfter: student.xp,
-      reason: "Project Approved",
-    });
-
-    // 🔥 6️⃣ Update Streak (Includes Bonus XP + Badge)
-    const streakData = await updateStreak(student._id);
-
-    if (streakData) {
-      io.to(student._id.toString()).emit("streak-update", streakData);
-
-      // If streak bonus gave XP → refresh dashboard
-      if (streakData.bonusXP > 0) {
-        io.to(student._id.toString()).emit("level-up");
-      }
-
-      // If streak badge awarded
-      if (streakData.badgeAwarded) {
-        io.to(student._id.toString()).emit("badge-earned");
-      }
-    }
-
-    // 7️⃣ Notify project update
-    io.emit("project-updated", {
-      projectId: project._id,
-      status: "COMPLETED",
-    });
+    const xpResult = await awardXP(
+      project.studentId,
+      50,
+      "Project Completed"
+    );
 
     res.json({
-      message: "Project completed. XP, level & streak updated.",
+      message: "Project completed",
       project,
-      newLevel: student.level,
-      xp: student.xp,
+      xp: xpResult.xp,
+      level: xpResult.level,
+      badge: xpResult.badge
     });
 
   } catch (err) {
-    console.log(err);
     res.status(500).json({ message: err.message });
   }
+
 };
 
 /* ===============================
