@@ -17,6 +17,13 @@ router.put(
   projectController.updateProgress
 );
 
+router.put(
+  "/:projectId",
+  auth,
+  role("STUDENT"),
+  projectController.updateProject
+);
+
 router.post(
   "/:projectId/milestones",
   auth,
