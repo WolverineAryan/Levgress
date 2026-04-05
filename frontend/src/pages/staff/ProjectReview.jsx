@@ -15,16 +15,6 @@ export default function ProjectReview() {
   });
   const [rejectReason, setRejectReason] = useState("");
 
-  // Fetch all students
-  const fetchStudents = async () => {
-    try {
-      const res = await api.get("/users/students");
-      setStudents(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Fetch projects of selected student
   const fetchProjects = async (studentId) => {
     setLoading(true);
@@ -63,7 +53,16 @@ export default function ProjectReview() {
   };
 
   useEffect(() => {
-    fetchStudents();
+    const loadStudents = async () => {
+      try {
+        const res = await api.get("/users/students");
+        setStudents(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    void loadStudents();
   }, []);
 
   const filteredStudents = students.filter((student) =>

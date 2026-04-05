@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../api/axios";
 
 export default function Projects() {
@@ -15,22 +15,9 @@ export default function Projects() {
 
   const [loading, setLoading] = useState(false);
 
-  /* ---------------- FETCH PROJECTS ---------------- */
-
-  const fetchProjects = async () => {
-    try {
-      const res = await api.get("/projects/me");
-      setProjects(res.data);
-
-      res.data.forEach((p) => fetchMilestones(p._id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   /* ---------------- FETCH MILESTONES ---------------- */
 
-  const fetchMilestones = async (projectId) => {
+  const fetchMilestones = useCallback(async (projectId) => {
     try {
       const res = await api.get(`/milestones/${projectId}`);
 
@@ -41,7 +28,22 @@ export default function Projects() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
+
+  /* ---------------- FETCH PROJECTS ---------------- */
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await api.get("/projects/me");
+      setProjects(res.data);
+
+      res.data.forEach((p) => {
+        void fetchMilestones(p._id);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }, [fetchMilestones]);
 
   /* ---------------- ADD MILESTONE ---------------- */
 
@@ -103,22 +105,24 @@ export default function Projects() {
   /* ---------------- UPDATE PROJECT ---------------- */
 
   const updateProject = async () => {
+    if (!editingId) return;
+
+    setLoading(true);
+
     try {
       await api.put(`/projects/${editingId}`, form);
-
+      await fetchProjects();
       setEditingId(null);
-
       setForm({
         title: "",
         description: "",
         liveUrl: "",
         githubUrl: "",
       });
-
-      fetchProjects();
     } catch (err) {
       console.error(err);
     }
+    setLoading(false);
   };
 
   const startEdit = (project) => {
@@ -151,8 +155,9 @@ export default function Projects() {
   /* ---------------- LOAD DATA ---------------- */
 
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchProjects();
+  }, [fetchProjects]);
 
   return (
     <div>
@@ -197,9 +202,10 @@ export default function Projects() {
         {editingId ? (
           <button
             onClick={updateProject}
+            disabled={loading}
             className="bg-green-600 px-4 py-2 rounded-lg"
           >
-            Update Project
+            {loading ? "Updating..." : "Update Project"}
           </button>
         ) : (
           <button

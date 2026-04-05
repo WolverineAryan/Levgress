@@ -32,10 +32,6 @@ export default function StaffDashboard() {
   /* =========================
      ALERTS
   ========================== */
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
-
   const fetchAlerts = async () => {
     try {
       const res = await api.get("/alerts/stagnation");
@@ -44,6 +40,11 @@ export default function StaffDashboard() {
       console.error("Alert fetch error", err);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAlerts();
+  }, []);
 
   /* =========================
      BATCH ANALYTICS
