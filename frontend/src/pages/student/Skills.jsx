@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../api/axios";
 
 export default function Skills() {
@@ -8,23 +8,23 @@ export default function Skills() {
   const [level, setLevel] = useState("BEGINNER");
   const [loading, setLoading] = useState(false);
 
-  const fetchSkills = async () => {
+  const fetchSkills = useCallback(async () => {
     try {
       const res = await api.get("/skills/me");
       setSkills(res.data);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
-  const fetchMasterSkills = async () => {
+  const fetchMasterSkills = useCallback(async () => {
     try {
       const res = await api.get("/skills/master");
       setMasterSkills(res.data);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
   const addSkill = async () => {
     if (!selectedSkill) return;
@@ -55,9 +55,10 @@ export default function Skills() {
   };
 
   useEffect(() => {
-    fetchSkills();
-    fetchMasterSkills();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchSkills();
+    void fetchMasterSkills();
+  }, [fetchMasterSkills, fetchSkills]);
 
   return (
     <div>
