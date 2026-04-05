@@ -84,10 +84,11 @@ export default function StudentDashboard() {
   </div>
 
   {/* Top Stats Grid */}
-  <div className="grid md:grid-cols-4 gap-6 mb-10">
+  <div className="grid md:grid-cols-5 gap-6 mb-10">
     <StatCard title="Level" value={stats.level} />
     <StatCard title="XP" value={stats.currentXP} />
     <StatCard title="🔥 Streak" value={`${currentStreak} days`} />
+    <StatCard title="🏅 Best Streak" value={`${longestStreak} days`} />
     <StatCard
       title="Engagement"
       value={stats.engagementRisk}
@@ -106,11 +107,11 @@ export default function StudentDashboard() {
     <div className="w-full bg-zinc-800 h-4 rounded-full">
       <div
         className="bg-indigo-600 h-4 rounded-full transition-all duration-500"
-        style={{ width: `${stats.currentXP % 100}%` }}
+        style={{ width: `${xpProgress}%` }}
       />
     </div>
     <p className="text-sm text-zinc-400 mt-3">
-      {stats.currentXP % 100} XP toward next level
+      {xpProgress} XP toward next level
     </p>
   </SectionCard>
 

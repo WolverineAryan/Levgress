@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../api/axios";
 import socket from "../../socket/socket";
 
@@ -6,10 +6,10 @@ export default function ProjectComments({ projectId }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     const res = await api.get(`/projects/${projectId}/comments`);
     setComments(res.data);
-  };
+  }, [projectId]);
 
   const submitComment = async () => {
     if (!text) return;
@@ -22,7 +22,8 @@ export default function ProjectComments({ projectId }) {
   };
 
   useEffect(() => {
-    fetchComments();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchComments();
 
     // Join project room
     socket.emit("join-project", projectId);
@@ -35,7 +36,7 @@ export default function ProjectComments({ projectId }) {
     return () => {
       socket.off("new-comment");
     };
-  }, [projectId]);
+  }, [fetchComments, projectId]);
 
   return (
     <div>
