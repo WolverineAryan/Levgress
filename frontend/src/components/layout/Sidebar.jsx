@@ -8,7 +8,8 @@ export default function Sidebar() {
     { name: "Skills", path: "/student/skills" },
     { name: "Projects", path: "/student/projects" },
     { name: "Badges", path: "/student/badges" },
-    { name: "Leaderboard", path: "/student/leaderboard" }
+    { name: "Leaderboard", path: "/student/leaderboard" },
+    { name: "AI Insights", path: "/ai-insights" }
   ];
 
   const staffLinks = [
@@ -35,6 +36,7 @@ export default function Sidebar() {
             }
           >
             {link.name}
+            
           </NavLink>
         ))}
       </nav>

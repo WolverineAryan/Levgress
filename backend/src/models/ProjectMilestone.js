@@ -28,9 +28,15 @@ const milestoneSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
-    evidenceUrl: String,
+evidence: {
+  type: {
+    type: String,
+    enum: ["url", "image", "video", "pdf"]
+  },
+  value: String
+},
 
-    isValidated: {
+isValidated: {
       type: Boolean,
       default: false,
     },

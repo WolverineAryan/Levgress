@@ -27,3 +27,10 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const analyticsRoutes = require("./src/routes/analytics.routes");
+app.use("/api/analytics", analyticsRoutes);
+
+const aiInsightsRoutes = require("./src/routes/aiInsights.routes");
+console.log("aiInsightsRoutes =>", aiInsightsRoutes);
+app.use("/api/ai-insights", aiInsightsRoutes);

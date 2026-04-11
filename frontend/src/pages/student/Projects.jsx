@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api/axios";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
   const [milestones, setMilestones] = useState({});
   const [editingId, setEditingId] = useState(null);
+  const [inputs, setInputs] = useState({});
 
   const [form, setForm] = useState({
     title: "",
@@ -38,44 +40,12 @@ export default function Projects() {
       setProjects(res.data);
 
       res.data.forEach((p) => {
-        void fetchMilestones(p._id);
+        fetchMilestones(p._id);
       });
     } catch (err) {
       console.error(err);
     }
   }, [fetchMilestones]);
-
-  /* ---------------- ADD MILESTONE ---------------- */
-
-  const addMilestone = async (projectId, title) => {
-    if (!title) return;
-
-    try {
-      await api.post(`/milestones/${projectId}`, { title });
-
-      fetchMilestones(projectId);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  /* ---------------- COMPLETE MILESTONE ---------------- */
-
-  const completeMilestone = async (milestoneId, projectId) => {
-    try {
-      const res = await api.put(`/milestones/${milestoneId}/complete`);
-
-      fetchMilestones(projectId);
-
-      /* Badge notification */
-
-      if (res.data.badge) {
-        alert(`🏆 Badge Unlocked: ${res.data.badge.title}`);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   /* ---------------- CREATE PROJECT ---------------- */
 
@@ -134,27 +104,38 @@ export default function Projects() {
     });
   };
 
-  /* ---------------- UPDATE PROGRESS ---------------- */
+  /* ---------------- UPLOAD EVIDENCE ---------------- */
 
-  const updateProgress = async (id, progress) => {
+  const uploadEvidence = async (milestoneId, projectId) => {
     try {
-      await api.put(`/projects/${id}/progress`, {
-        progress: Number(progress),
+      const evidenceUrl = inputs[milestoneId];
+
+      if (!evidenceUrl) {
+        return alert("Please enter evidence URL");
+      }
+
+      await api.put(`/milestones/${milestoneId}/evidence`, {
+        evidenceUrl,
       });
 
-      setProjects((prev) =>
-        prev.map((p) => (p._id === id ? { ...p, progress } : p)),
-      );
+      alert("✅ Milestone validated!");
+
+      // clear input
+      setInputs((prev) => ({ ...prev, [milestoneId]: "" }));
+
+      fetchMilestones(projectId);
     } catch (err) {
-      console.error(err);
+      alert(
+        err.response?.data?.feedback?.join("\n") ||
+          "❌ Validation failed"
+      );
     }
   };
 
   /* ---------------- LOAD DATA ---------------- */
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchProjects();
+    fetchProjects();
   }, [fetchProjects]);
 
   return (
@@ -172,28 +153,36 @@ export default function Projects() {
           type="text"
           placeholder="Project Title"
           value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, title: e.target.value })
+          }
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <textarea
           placeholder="Description"
           value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, description: e.target.value })
+          }
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <input
           placeholder="Live Project URL"
           value={form.liveUrl}
-          onChange={(e) => setForm({ ...form, liveUrl: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, liveUrl: e.target.value })
+          }
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <input
           placeholder="GitHub Repository URL"
           value={form.githubUrl}
-          onChange={(e) => setForm({ ...form, githubUrl: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, githubUrl: e.target.value })
+          }
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
@@ -218,110 +207,212 @@ export default function Projects() {
       {/* PROJECT LIST */}
 
       <div className="space-y-6">
-        {projects.map((project) => (
-          <div
-            key={project._id}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
-          >
-            {/* TITLE */}
+        {projects.map((project) => {
+          const projectMilestones = milestones[project._id] || [];
 
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold">{project.title}</h3>
+          const completed = projectMilestones.filter(
+            (m) => m.status === "COMPLETED"
+          ).length;
 
-              <button
-                onClick={() => startEdit(project)}
-                className="text-xs bg-zinc-800 px-3 py-1 rounded"
-              >
-                Edit
-              </button>
-            </div>
+          const progress =
+            projectMilestones.length > 0
+              ? Math.round(
+                  (completed / projectMilestones.length) * 100
+                )
+              : 0;
 
-            <p className="text-sm text-zinc-400 mb-4">{project.description}</p>
+          return (
+            <div
+              key={project._id}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+            >
+              {/* TITLE */}
 
-            {/* LINKS */}
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-semibold">
+                  {project.title}
+                </h3>
 
-            <div className="flex gap-4 mb-4 text-sm">
-              {project.liveUrl && (
-                <a
-                  href={project.liveUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-400"
+                <button
+                  onClick={() => startEdit(project)}
+                  className="text-xs bg-zinc-800 px-3 py-1 rounded"
                 >
-                  Live Project
-                </a>
-              )}
-
-              {project.githubUrl && (
-                <a
-                  href={project.githubUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-green-400"
-                >
-                  GitHub Repo
-                </a>
-              )}
-            </div>
-
-            {/* PROGRESS */}
-
-            <div className="mb-4">
-              <div className="flex justify-between text-xs text-zinc-400 mb-1">
-                <span>Progress</span>
-                <span>{project.progress || 0}%</span>
+                  Edit
+                </button>
               </div>
 
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={project.progress || 0}
-                onChange={(e) => updateProgress(project._id, e.target.value)}
-                className="w-full accent-indigo-600"
-              />
-            </div>
+              <p className="text-sm text-zinc-400 mb-4">
+                {project.description}
+              </p>
 
-            {/* MILESTONES */}
+              {/* LINKS */}
 
-            <div className="mt-4">
-              <h4 className="text-sm font-semibold mb-2">Milestones</h4>
+              <div className="flex gap-4 mb-4 text-sm">
+                {project.liveUrl && (
+                  <a
+                    href={project.liveUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-400"
+                  >
+                    Live Project
+                  </a>
+                )}
 
-              {(milestones[project._id] || []).map((m) => (
-                <div
-                  key={m._id}
-                  className="flex justify-between items-center text-sm bg-zinc-800 p-2 rounded mb-2"
-                >
-                  <span>{m.title}</span>
+                {project.githubUrl && (
+                  <a
+                    href={project.githubUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-green-400"
+                  >
+                    GitHub Repo
+                  </a>
+                )}
+              </div>
 
-                  {m.status !== "COMPLETED" ? (
-                    <button
-                      onClick={() => completeMilestone(m._id, project._id)}
-                      className="bg-green-600 text-xs px-2 py-1 rounded"
-                    >
-                      Complete
-                    </button>
-                  ) : (
-                    <span className="text-xs text-green-400">Completed</span>
-                  )}
+              {/* PROGRESS BAR */}
+
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                  <span>Progress</span>
+                  <span>{progress}%</span>
                 </div>
-              ))}
 
-              {/* ADD MILESTONE */}
+                <div className="w-full bg-zinc-700 h-2 rounded">
+                  <div
+                    className="bg-indigo-600 h-2 rounded"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
 
-              <input
-                placeholder="Add milestone..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    addMilestone(project._id, e.target.value);
-                    e.target.value = "";
-                  }
-                }}
-                className="bg-zinc-800 px-3 py-2 rounded w-full mt-2"
-              />
+              {/* VIEW PROJECT */}
+
+              <div className="mb-4">
+                <Link
+                  to={`/project/${project._id}`}
+                  className="text-indigo-400 text-sm"
+                >
+                  View Project →
+                </Link>
+              </div>
+
+              {/* MILESTONES */}
+
+              <div>
+                <h4 className="text-sm font-semibold mb-3">
+                  Milestones
+                </h4>
+
+                {projectMilestones.map((m) => (
+                  <div
+                    key={m._id}
+                    className="bg-zinc-800 p-4 rounded-lg mb-3"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span>{m.title}</span>
+
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${
+                          m.status === "COMPLETED"
+                            ? "bg-green-600"
+                            : "bg-yellow-600"
+                        }`}
+                      >
+                        {m.status}
+                      </span>
+                    </div>
+
+                    {!m.isValidated && (
+                      <div className="flex flex-col gap-2">
+
+  {/* URL INPUT */}
+  <input
+    type="text"
+    placeholder="Paste URL (GitHub / Live)..."
+    value={inputs[m._id]?.url || ""}
+    onChange={(e) =>
+      setInputs({
+        ...inputs,
+        [m._id]: {
+          ...inputs[m._id],
+          url: e.target.value
+        }
+      })
+    }
+    className="bg-zinc-700 px-3 py-2 rounded text-sm"
+  />
+
+  {/* FILE INPUT */}
+  <input
+    type="file"
+    onChange={(e) =>
+      setInputs({
+        ...inputs,
+        [m._id]: {
+          ...inputs[m._id],
+          file: e.target.files[0]
+        }
+      })
+    }
+    className="text-sm"
+  />
+
+  <button
+    onClick={async () => {
+      try {
+        const formData = new FormData();
+
+        if (inputs[m._id]?.file) {
+          formData.append("file", inputs[m._id].file);
+        } else {
+          formData.append(
+            "evidence",
+            JSON.stringify({
+              type: "url",
+              value: inputs[m._id]?.url
+            })
+          );
+        }
+
+        await api.put(
+          `/milestones/${m._id}/evidence`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data"
+            }
+          }
+        );
+
+        alert("✅ Uploaded!");
+
+        fetchMilestones(project._id);
+
+      } catch (err) {
+        alert("❌ Upload failed");
+      }
+    }}
+    className="bg-indigo-600 px-3 py-2 rounded text-sm"
+  >
+    Upload Evidence
+  </button>
+
+</div>
+                    )}
+
+                    {m.isValidated && (
+                      <p className="text-green-400 text-xs mt-2">
+                        ✅ Completed via AI
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

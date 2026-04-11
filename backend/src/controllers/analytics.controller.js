@@ -92,3 +92,33 @@ exports.getOverviewAnalytics = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+const {
+  getStudentAnalytics,
+  getProjectAnalytics
+} = require("../services/aiInsights.service");
+
+// STUDENT
+const studentAnalytics = async (req, res) => {
+  try {
+    const data = await getStudentAnalytics(req.user.id);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// PROJECT
+const projectAnalytics = async (req, res) => {
+  try {
+    const data = await getProjectAnalytics(req.params.projectId);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  studentAnalytics,
+  projectAnalytics
+};

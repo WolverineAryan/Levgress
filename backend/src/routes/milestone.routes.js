@@ -1,37 +1,32 @@
 const express = require("express");
 const router = express.Router();
-
+const upload = require("../middleware/upload");
 const auth = require("../middleware/auth.middleware");
 const role = require("../middleware/role.middleware");
 
-const milestone = require("../controllers/milestone.controller");
+const milestoneController = require("../controllers/milestone.controller");
 
-/* STUDENT */
+/* GET MILESTONES */
+router.get(
+  "/:projectId",
+  auth,
+  milestoneController.getMilestones
+);
 
+/* ADD MILESTONE (optional) */
 router.post(
   "/:projectId",
   auth,
   role("STUDENT"),
-  milestone.addMilestone
+  milestoneController.addMilestone
 );
 
-router.get(
-  "/:projectId",
-  auth,
-  milestone.getMilestones
-);
-
-router.put(
-  "/:id/complete",
-  auth,
-  role("STUDENT"),
-  milestone.completeMilestone
-);
-
+/* UPLOAD EVIDENCE  */
 router.put(
   "/:id/evidence",
   auth,
   role("STUDENT"),
+  upload.single("file"),
   milestoneController.uploadEvidence
 );
 

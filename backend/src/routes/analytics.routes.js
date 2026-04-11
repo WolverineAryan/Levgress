@@ -1,31 +1,16 @@
 const express = require("express");
+
+const {
+  studentAnalytics,
+  projectAnalytics
+} = require("../controllers/analytics.controller");
+
+const authMiddleware = require("../middleware/auth.middleware");
+
 const router = express.Router();
-const auth = require("../middleware/auth.middleware");
-const role = require("../middleware/role.middleware");
-const controller = require("../controllers/analytics.controller");
-const { getOverviewAnalytics } = require("../controllers/analytics.controller");
 
-router.get(
-  "/student/:id",
-  auth,
-  role("STAFF"),
-  controller.studentAnalytics
-);
-router.get("/trend", auth,role("STAFF"), controller.monthlyProjectTrend);
-router.get("/overview", getOverviewAnalytics);
-
-router.get(
-  "/batch/:batch",
-  auth,
-  role("STAFF"),
-  controller.batchAnalytics
-);
-
-router.get(
-  "/department/:dept",
-  auth,
-  role("STAFF"),
-  controller.departmentAnalytics
-);
+// REAL ROUTES
+router.get("/student", authMiddleware, studentAnalytics);
+router.get("/project/:projectId", authMiddleware, projectAnalytics);
 
 module.exports = router;

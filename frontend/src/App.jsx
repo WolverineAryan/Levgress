@@ -12,6 +12,8 @@ import Badges from "./pages/student/Badges";
 import ToastProvider from "./components/notifications/ToastProvider";
 import ProjectReview from "./pages/staff/ProjectReview";
 import Leaderboard from "./pages/student/Leaderboard";
+import AIInsights from "./pages/AIInsights";
+import ProjectDetails from "./pages/ProjectDetails";
 
 export default function App() {
   return (
@@ -116,6 +118,10 @@ export default function App() {
         />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
+
+        <Route path="/ai-insights" element={<AIInsights />} />
+
+        <Route path="/project/:projectId" element={<ProjectDetails />} />
       </Routes>
     </>
   );
