@@ -3,7 +3,6 @@ const router = express.Router();
 const upload = require("../middleware/upload");
 const auth = require("../middleware/auth.middleware");
 const role = require("../middleware/role.middleware");
-
 const milestoneController = require("../controllers/milestone.controller");
 
 /* GET MILESTONES */

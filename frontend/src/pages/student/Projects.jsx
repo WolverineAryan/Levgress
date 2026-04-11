@@ -109,30 +109,41 @@ export default function Projects() {
   /* ---------------- UPLOAD EVIDENCE ---------------- */
 
   const uploadEvidence = async (milestoneId, projectId) => {
-    try {
-      const evidenceUrl = inputs[milestoneId];
+  try {
+    const formData = new FormData();
 
-      if (!evidenceUrl) {
-        return alert("Please enter evidence URL");
-      }
-
-      await api.put(`/milestones/${milestoneId}/evidence`, {
-        evidenceUrl,
-      });
-
-      alert("✅ Milestone validated!");
-
-      // clear input
-      setInputs((prev) => ({ ...prev, [milestoneId]: "" }));
-
-      fetchMilestones(projectId);
-    } catch (err) {
-      alert(
-        err.response?.data?.feedback?.join("\n") ||
-          "❌ Validation failed"
-      );
+    if (inputs[milestoneId]?.file) {
+      formData.append("file", inputs[milestoneId].file);
+    } else if (inputs[milestoneId]) {
+      formData.append("evidenceUrl", inputs[milestoneId].url);
+    } else {
+      return alert("Please provide evidence");
     }
-  };
+
+    await api.put(
+      `/milestones/${milestoneId}/evidence`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      }
+    );
+
+    alert("✅ Uploaded!");
+
+    fetchMilestones(projectId);
+
+  } catch (err) {
+    console.error(err);
+
+    alert(
+      err.response?.data?.message ||
+      err.response?.data?.feedback?.join("\n") ||
+      "Upload failed"
+    );
+  }
+};
 
   /* ---------------- LOAD DATA ---------------- */
 
@@ -155,36 +166,28 @@ export default function Projects() {
           type="text"
           placeholder="Project Title"
           value={form.title}
-          onChange={(e) =>
-            setForm({ ...form, title: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <textarea
           placeholder="Description"
           value={form.description}
-          onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <input
           placeholder="Live Project URL"
           value={form.liveUrl}
-          onChange={(e) =>
-            setForm({ ...form, liveUrl: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, liveUrl: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
         <input
           placeholder="GitHub Repository URL"
           value={form.githubUrl}
-          onChange={(e) =>
-            setForm({ ...form, githubUrl: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, githubUrl: e.target.value })}
           className="w-full bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg mb-4"
         />
 
@@ -214,14 +217,12 @@ export default function Projects() {
           const projectMilestones = milestones[project._id] || [];
 
           const completed = projectMilestones.filter(
-            (m) => m.status === "COMPLETED"
+            (m) => m.status === "COMPLETED",
           ).length;
 
           const progress =
             projectMilestones.length > 0
-              ? Math.round(
-                  (completed / projectMilestones.length) * 100
-                )
+              ? Math.round((completed / projectMilestones.length) * 100)
               : 0;
 
           return (
@@ -232,9 +233,7 @@ export default function Projects() {
               {/* TITLE */}
 
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold">
-                  {project.title}
-                </h3>
+                <h3 className="text-lg font-semibold">{project.title}</h3>
 
                 <button
                   onClick={() => startEdit(project)}
@@ -304,15 +303,10 @@ export default function Projects() {
               {/* MILESTONES */}
 
               <div>
-                <h4 className="text-sm font-semibold mb-3">
-                  Milestones
-                </h4>
+                <h4 className="text-sm font-semibold mb-3">Milestones</h4>
 
                 {projectMilestones.map((m) => (
-                  <div
-                    key={m._id}
-                    className="bg-zinc-800 p-4 rounded-lg mb-3"
-                  >
+                  <div key={m._id} className="bg-zinc-800 p-4 rounded-lg mb-3">
                     <div className="flex justify-between items-center mb-2">
                       <span>{m.title}</span>
 
@@ -329,80 +323,77 @@ export default function Projects() {
 
                     {!m.isValidated && (
                       <div className="flex flex-col gap-2">
+                        {/* URL INPUT */}
+                        <input
+                          type="text"
+                          placeholder="Paste URL (GitHub / Live)..."
+                          value={inputs[m._id]?.url || ""}
+                          onChange={(e) =>
+                            setInputs({
+                              ...inputs,
+                              [m._id]: {
+                                ...inputs[m._id],
+                                url: e.target.value,
+                              },
+                            })
+                          }
+                          className="bg-zinc-700 px-3 py-2 rounded text-sm"
+                        />
 
-  {/* URL INPUT */}
-  <input
-    type="text"
-    placeholder="Paste URL (GitHub / Live)..."
-    value={inputs[m._id]?.url || ""}
-    onChange={(e) =>
-      setInputs({
-        ...inputs,
-        [m._id]: {
-          ...inputs[m._id],
-          url: e.target.value
-        }
-      })
-    }
-    className="bg-zinc-700 px-3 py-2 rounded text-sm"
-  />
+                        {/* FILE INPUT */}
+                        <input
+                          type="file"
+                          onChange={(e) =>
+                            setInputs({
+                              ...inputs,
+                              [m._id]: {
+                                ...inputs[m._id],
+                                file: e.target.files[0],
+                              },
+                            })
+                          }
+                          className="text-sm"
+                        />
 
-  {/* FILE INPUT */}
-  <input
-    type="file"
-    onChange={(e) =>
-      setInputs({
-        ...inputs,
-        [m._id]: {
-          ...inputs[m._id],
-          file: e.target.files[0]
-        }
-      })
-    }
-    className="text-sm"
-  />
+                        <button
+                          onClick={async () => {
+                            try {
+                              const formData = new FormData();
 
-  <button
-    onClick={async () => {
-      try {
-        const formData = new FormData();
+                              if (inputs[m._id]?.file) {
+                                formData.append("file", inputs[m._id].file);
+                              } else {
+                                formData.append(
+                                  "evidence",
+                                  JSON.stringify({
+                                    type: "url",
+                                    value: inputs[m._id]?.url,
+                                  }),
+                                );
+                              }
 
-        if (inputs[m._id]?.file) {
-          formData.append("file", inputs[m._id].file);
-        } else {
-          formData.append(
-            "evidence",
-            JSON.stringify({
-              type: "url",
-              value: inputs[m._id]?.url
-            })
-          );
-        }
+                              await api.put(
+                                `/milestones/${m._id}/evidence`,
+                                formData,
+                                {
+                                  headers: {
+                                    "Content-Type": "multipart/form-data",
+                                  },
+                                },
+                              );
 
-        await api.put(
-          `/milestones/${m._id}/evidence`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data"
-            }
-          }
-        );
+                              alert("✅ Uploaded!");
 
-        alert("✅ Uploaded!");
-
-        fetchMilestones(project._id);
-
-      } catch (err) {
-        alert("❌ Upload failed");
-      }
-    }}
-    className="bg-indigo-600 px-3 py-2 rounded text-sm"
-  >
-    Upload Evidence
-  </button>
-
-</div>
+                              fetchMilestones(project._id);
+                            } catch (err) {
+                              alert("❌ Upload failed");
+                            }
+                          }}
+                          className="bg-indigo-600 px-3 py-2 rounded text-sm"
+                        >
+                          Upload Evidence
+                        </button>
+                      </div>
                     )}
 
                     {m.isValidated && (

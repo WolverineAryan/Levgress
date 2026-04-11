@@ -1,6 +1,4 @@
-const {
-  generateStudentAIInsights
-} = require("../services/aiInsightsAI.service");
+const { generateStudentAIInsights } = require("../services/aiInsights.service");
 
 exports.getAIInsights = async (req, res) => {
   try {

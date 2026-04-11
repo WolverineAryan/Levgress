@@ -1,20 +1,17 @@
-
 const ProjectMilestone = require("../models/ProjectMilestone");
 const Project = require("../models/Project");
 const User = require("../models/User");
-const Badge = require("../models/Badge");
 const XpHistory = require("../models/XpHistory");
 const { evaluateEvidence } = require("../services/aiEvaluation.service");
 const ValidationLog = require("../models/validationLog.model");
 
+
 /* ===============================
-   ADD MILESTONE
+   ADD MILESTONE (OPTIONAL)
 ================================ */
 
 exports.addMilestone = async (req, res) => {
-
   try {
-
     const project = await Project.findById(req.params.projectId);
 
     if (!project) {
@@ -35,17 +32,14 @@ exports.addMilestone = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-
 };
 
 /* ===============================
-   GET PROJECT MILESTONES
+   GET MILESTONES
 ================================ */
 
 exports.getMilestones = async (req, res) => {
-
   try {
-
     const milestones = await ProjectMilestone.find({
       projectId: req.params.projectId
     }).sort({ createdAt: 1 });
@@ -55,74 +49,96 @@ exports.getMilestones = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-
 };
 
 /* ===============================
-    UPLOAD EVIDENCE
+   DETECT TYPE (IMPROVED)
 ================================ */
-// let evidence;
-// if (req.file) {
-//   evidence = {
-//     type: "image", // or detect from mimetype
-//     value: req.file.path
-//   };
-// } else {
-//   evidence = req.body.evidence;
-// }
-// -----------------------------
-// HELPER: Detect Evidence Type
-// -----------------------------
-function detectType(url) {
-  if (!url) return "unknown";
 
-  if (url.includes("github.com")) return "github";
-  if (url.includes("figma.com")) return "image";
-  if (url.includes("vercel.app") || url.includes("netlify.app"))
-    return "live";
+function detectType(url, file) {
+  if (file) {
+    const mime = file.mimetype;
+
+    if (mime.startsWith("image")) return "image";
+    if (mime.startsWith("video")) return "video";
+    if (mime === "application/pdf") return "pdf";
+
+    return "file";
+  }
+
+  if (url?.includes("github.com")) return "github";
+  if (url?.includes("figma.com")) return "image";
+  if (url?.includes("vercel.app") || url?.includes("netlify.app")) return "live";
 
   return "live";
 }
 
-// -----------------------------
-// MAIN CONTROLLER
-// -----------------------------
+/* ===============================
+   UPLOAD EVIDENCE (UPDATED)
+================================ */
+
 exports.uploadEvidence = async (req, res) => {
   try {
-    const { evidenceUrl } = req.body;
-
-    if (!evidenceUrl) {
-      return res.status(400).json({
-        message: "Evidence URL is required"
-      });
-    }
-
     const milestone = await ProjectMilestone.findById(req.params.id);
-
+const project = await Project.findById(milestone.projectId);
     if (!milestone) {
-      return res.status(404).json({
-        message: "Milestone not found"
-      });
+      return res.status(404).json({ message: "Milestone not found" });
     }
 
-    // Prevent duplicate submission
     if (milestone.isValidated) {
       return res.status(400).json({
         message: "Milestone already completed"
       });
     }
+    console.log("BODY:", req.body);
+console.log("FILE:", req.file);
+    let evidenceValue;
+    let type;
 
-    // Detect type
-    const type = detectType(evidenceUrl);
+    // ---------------- FILE CASE ----------------
+    if (req.file) {
+      evidenceValue = req.file.path;
+      type = detectType(null, req.file);
+    }
 
-    // AI Evaluation
-    const result = await evaluateEvidence({
-      type,
-      url: evidenceUrl,
-      milestone: milestone.title
+    // ---------------- URL CASE ----------------
+    else if (req.body.evidenceUrl) {
+      evidenceValue = req.body.evidenceUrl;
+      type = detectType(evidenceValue);
+    }
+
+    else {
+      return res.status(400).json({
+        message: "Evidence (file or URL) is required"
+      });
+    }
+
+    // ---------------- AI EVALUATION ----------------
+if (req.file) {
+  const sizeMB = req.file.size / (1024 * 1024);
+
+  if (sizeMB > 5) {
+    return res.status(400).json({
+      message: "File too large"
     });
+  }
 
-    // Save log
+  if (!req.file.mimetype.startsWith("image")) {
+    return res.status(400).json({
+      message: "Only images allowed for this milestone"
+    });
+  }
+}
+    const result = await evaluateEvidence({
+  type,
+  url: evidenceValue,
+  milestone: milestone.title,
+  projectTitle: project.title,
+  projectDescription: project.description
+});
+
+    // ---------------- SAVE LOG ----------------
+
     await ValidationLog.create({
       studentId: req.user._id,
       projectId: milestone.projectId,
@@ -133,15 +149,21 @@ exports.uploadEvidence = async (req, res) => {
       confidence: result.confidence
     });
 
-    // HANDLE RESULT
+    // ---------------- HANDLE RESULT ----------------
+
     if (result.verdict === "PASS") {
+
       milestone.status = "COMPLETED";
       milestone.isValidated = true;
-      milestone.evidenceUrl = null;
+      milestone.evidence = {
+        type,
+        value: evidenceValue
+      };
 
       await milestone.save();
 
-      // ✅ CHECK PROJECT COMPLETION
+      // ---------------- CHECK PROJECT COMPLETION ----------------
+
       const total = await ProjectMilestone.countDocuments({
         projectId: milestone.projectId
       });
@@ -154,13 +176,14 @@ exports.uploadEvidence = async (req, res) => {
       let projectCompleted = false;
 
       if (total === completed) {
+
         await Project.findByIdAndUpdate(milestone.projectId, {
           status: "COMPLETED"
         });
 
         projectCompleted = true;
 
-        // ✅ ADD XP HERE (CORRECT PLACE)
+        // XP
         const student = await User.findById(req.user._id);
 
         student.xp = (student.xp || 0) + 50;
@@ -176,7 +199,7 @@ exports.uploadEvidence = async (req, res) => {
         });
       }
 
-      //  REAL-TIME EVENT
+      // REAL-TIME EVENT
       if (global.io) {
         global.io.emit("milestone-completed", {
           milestoneId: milestone._id,
@@ -193,7 +216,8 @@ exports.uploadEvidence = async (req, res) => {
       });
     }
 
-    // FAIL CASE
+    // ---------------- FAIL CASE ----------------
+
     return res.status(400).json({
       success: false,
       message: "Validation failed",
