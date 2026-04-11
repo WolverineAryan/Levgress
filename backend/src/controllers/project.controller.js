@@ -111,6 +111,49 @@ exports.updateProgress = async (req, res) => {
 };
 
 /* ===============================
+   UPDATE PROJECT DETAILS (Student)
+================================ */
+exports.updateProject = async (req, res) => {
+  try {
+    const allowedFields = [
+      "title",
+      "description",
+      "liveUrl",
+      "githubUrl",
+      "domain",
+      "techStack",
+      "phase",
+    ];
+
+    const updateData = allowedFields.reduce((acc, field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        acc[field] = req.body[field];
+      }
+      return acc;
+    }, {});
+
+    const project = await Project.findOneAndUpdate(
+      { _id: req.params.projectId, studentId: req.user._id },
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    await StudentStats.findOneAndUpdate(
+      { studentId: req.user._id },
+      { lastActivityAt: new Date() }
+    );
+
+    res.json(project);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update project details" });
+  }
+};
+
+/* ===============================
    COMPLETE PROJECT (Staff)
    + XP + LEVEL + STREAK + BADGE
 ================================ */

@@ -75,22 +75,24 @@ export default function Projects() {
   /* ---------------- UPDATE PROJECT ---------------- */
 
   const updateProject = async () => {
+    if (!editingId) return;
+
+    setLoading(true);
+
     try {
       await api.put(`/projects/${editingId}`, form);
-
+      await fetchProjects();
       setEditingId(null);
-
       setForm({
         title: "",
         description: "",
         liveUrl: "",
         githubUrl: "",
       });
-
-      fetchProjects();
     } catch (err) {
       console.error(err);
     }
+    setLoading(false);
   };
 
   const startEdit = (project) => {
@@ -189,9 +191,10 @@ export default function Projects() {
         {editingId ? (
           <button
             onClick={updateProject}
+            disabled={loading}
             className="bg-green-600 px-4 py-2 rounded-lg"
           >
-            Update Project
+            {loading ? "Updating..." : "Update Project"}
           </button>
         ) : (
           <button
