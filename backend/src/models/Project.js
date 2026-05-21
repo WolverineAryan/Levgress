@@ -62,6 +62,8 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
+    
+    images: [String],
 
     completedAt: Date,
   },
