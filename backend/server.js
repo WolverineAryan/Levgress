@@ -17,6 +17,8 @@ connectDB();
 // ---------------- ROUTES ----------------
 const analyticsRoutes = require("./src/routes/analytics.routes");
 const aiInsightsRoutes = require("./src/routes/aiInsights.routes");
+const dashboardRoutes = require("./src/routes/dashboard.routes");
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/ai-insights", aiInsightsRoutes);

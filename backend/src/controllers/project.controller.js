@@ -1,225 +1,144 @@
-const Project = require("../models/Project");
 const ProjectMilestone = require("../models/ProjectMilestone");
-const StudentStats = require("../models/StudentStats");
+const Project = require("../models/Project");
 const User = require("../models/User");
 const XpHistory = require("../models/XpHistory");
 
 /* ===============================
-   DEFAULT MILESTONES
+   GET MILESTONES
 ================================ */
-const DEFAULT_MILESTONES = [
-  "Idea / Planning",
-  "UI / Design",
-  "Development",
-  "Testing",
-  "Deployment"
-];
-
-/* ===============================
-   CREATE PROJECT (AUTO MILESTONES)
-================================ */
-exports.createProject = async (req, res) => {
+exports.getMilestones = async (req, res) => {
   try {
-    const project = await Project.create({
-      studentId: req.user._id,
-      ...req.body,
-      status: "IN_PROGRESS"
-    });
-
-    // 🔥 ALWAYS CREATE 5 MILESTONES
-    await ProjectMilestone.insertMany(
-      DEFAULT_MILESTONES.map((title) => ({
-        projectId: project._id,
-        title,
-        status: "PENDING",
-        isValidated: false
-      }))
-    );
-
-    res.status(201).json(project);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* ===============================
-   GET MY PROJECTS
-================================ */
-exports.getMyProjects = async (req, res) => {
-  try {
-    const projects = await Project.find({ studentId: req.user._id });
-    res.json(projects);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* ===============================
-   GET STUDENT PROJECTS (STAFF)
-================================ */
-exports.getStudentProjects = async (req, res) => {
-  try {
-    const projects = await Project.find({ studentId: req.params.id });
-    res.json(projects);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* ===============================
-   UPDATE PROJECT DETAILS
-================================ */
-exports.updateProject = async (req, res) => {
-  try {
-    const allowedFields = [
-      "title",
-      "description",
-      "liveUrl",
-      "githubUrl",
-      "domain",
-      "techStack"
-    ];
-
-    const updateData = {};
-
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
-      }
-    });
-
-    const project = await Project.findOneAndUpdate(
-      { _id: req.params.projectId, studentId: req.user._id },
-      updateData,
-      { new: true }
-    );
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    await StudentStats.findOneAndUpdate(
-      { studentId: req.user._id },
-      { lastActivityAt: new Date() }
-    );
-
-    res.json(project);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* ===============================
-   UPLOAD PROJECT IMAGES
-================================ */
-exports.uploadProjectImages = async (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "No images uploaded" });
-    }
-
-    const imagePaths = req.files.map((file) => file.path);
-
-    const project = await Project.findByIdAndUpdate(
-      req.params.projectId,
-      {
-        $push: { images: { $each: imagePaths } }
-      },
-      { new: true }
-    );
-
-    res.json({
-      message: "Images uploaded",
-      images: imagePaths,
-      project
-    });
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* ===============================
-   GET PROJECT DETAILS
-================================ */
-exports.getProjectById = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.projectId);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
     const milestones = await ProjectMilestone.find({
-      projectId: project._id
+      projectId: req.params.projectId
     }).sort({ createdAt: 1 });
 
-    res.json({
-      project,
-      milestones
+    res.json(milestones);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ===============================
+   UPLOAD EVIDENCE (CORE LOGIC)
+================================ */
+exports.uploadEvidence = async (req, res) => {
+  try {
+    const milestone = await ProjectMilestone.findById(req.params.id);
+
+    if (!milestone) {
+      return res.status(404).json({ message: "Milestone not found" });
+    }
+
+    if (milestone.isValidated) {
+      return res.status(400).json({ message: "Already completed" });
+    }
+
+    const evidenceUrl = req.body.evidenceUrl;
+    const file = req.file;
+
+    // ---------------- INPUT VALIDATION ----------------
+    if (!file && !evidenceUrl) {
+      return res.status(400).json({
+        message: "Provide file or URL"
+      });
+    }
+
+    // ---------------- TYPE DETECTION ----------------
+    let type = "unknown";
+
+    if (file) {
+      type = "image";
+    } else if (evidenceUrl.includes("github.com")) {
+      type = "github";
+    } else {
+      type = "live";
+    }
+
+    // ---------------- RULE VALIDATION ----------------
+    const m = milestone.title;
+
+    if (m === "Development" && type !== "github") {
+      return res.status(400).json({
+        message: "Development requires GitHub repo"
+      });
+    }
+
+    if (m === "Deployment" && type !== "live") {
+      return res.status(400).json({
+        message: "Deployment requires live URL"
+      });
+    }
+
+    if (m === "UI / Design" && type !== "image") {
+      return res.status(400).json({
+        message: "UI/Design requires image proof"
+      });
+    }
+
+    // ---------------- SAVE EVIDENCE ----------------
+    milestone.status = "COMPLETED";
+    milestone.isValidated = true;
+    milestone.evidenceUrl = evidenceUrl || null;
+    milestone.filePath = file?.path || null;
+
+    await milestone.save();
+
+    // ---------------- PROJECT COMPLETION CHECK ----------------
+    const total = await ProjectMilestone.countDocuments({
+      projectId: milestone.projectId
+    });
+
+    const completed = await ProjectMilestone.countDocuments({
+      projectId: milestone.projectId,
+      status: "COMPLETED"
+    });
+
+    let projectCompleted = false;
+    let xp = null;
+    let level = null;
+
+    if (total === completed) {
+      projectCompleted = true;
+
+      await Project.findByIdAndUpdate(milestone.projectId, {
+        status: "COMPLETED"
+      });
+
+      const user = await User.findById(req.user._id);
+
+      user.xp = (user.xp || 0) + 50;
+      user.level = Math.floor(user.xp / 100) + 1;
+
+      await user.save();
+
+      xp = user.xp;
+      level = user.level;
+
+      await XpHistory.create({
+        studentId: user._id,
+        xpChange: 50,
+        totalXpAfter: user.xp,
+        reason: "Project Completed"
+      });
+    }
+
+    // ---------------- RESPONSE ----------------
+    return res.json({
+      success: true,
+      message: "Milestone validated",
+      milestone,
+      projectCompleted,
+      xp,
+      level
     });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+    console.error("UPLOAD ERROR:", err);
 
-/* ===============================
-   PROJECT COMMENTS
-================================ */
-exports.addProjectComment = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    const newComment = {
-      user: req.user._id,
-      text: req.body.text,
-      createdAt: new Date()
-    };
-
-    project.comments.push(newComment);
-    await project.save();
-
-    const populated = await Project.findById(req.params.id).populate(
-      "comments.user",
-      "name"
-    );
-
-    const latest =
-      populated.comments[populated.comments.length - 1];
-
-    req.app.get("io").to(req.params.id).emit("new-comment", latest);
-
-    res.json(latest);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* ===============================
-   GET COMMENTS
-================================ */
-exports.getProjectComments = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id).populate(
-      "comments.user",
-      "name"
-    );
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    res.json(project.comments || []);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      message: "Server error",
+      error: err.message
+    });
   }
 };
