@@ -3,7 +3,63 @@ import { useNavigate, Link } from "react-router-dom";
 import api from "../../api/axios";
 import socket from "../../socket/socket";
 
-// Engineering & Computer Science Icon Components
+// Form Input Icons
+const UserIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);
+
+const MailIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+    <path d="m22 7-10 7L2 7"></path>
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+  </svg>
+);
+
+const EyeOpenIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+);
+
+const EyeClosedIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+    <line x1="1" y1="1" x2="23" y2="23"></line>
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
+const BuildingIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+    <line x1="9" y1="22" x2="9" y2="18"></line>
+    <line x1="15" y1="22" x2="15" y2="18"></line>
+    <line x1="8" y1="8" x2="16" y2="8"></line>
+    <line x1="8" y1="12" x2="16" y2="12"></line>
+    <line x1="8" y1="16" x2="12" y2="16"></line>
+  </svg>
+);
+
+// Background Icons
 const CpuIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
@@ -68,12 +124,6 @@ const ShieldIcon = () => (
   </svg>
 );
 
-const CloudIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
-  </svg>
-);
-
 const GearIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3"></circle>
@@ -81,31 +131,8 @@ const GearIcon = () => (
   </svg>
 );
 
-const BrainIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 4a4 4 0 0 1 3.5 6.1A4 4 0 0 1 16 14a4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 .5-1.9A4 4 0 0 1 12 4z"></path>
-    <path d="M12 8v8"></path>
-    <path d="M8 12h8"></path>
-    <circle cx="12" cy="12" r="10"></circle>
-  </svg>
-);
-
-const RobotIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="11" width="18" height="10" rx="2"></rect>
-    <circle cx="12" cy="16" r="1"></circle>
-    <circle cx="8" cy="16" r="1"></circle>
-    <circle cx="16" cy="16" r="1"></circle>
-    <line x1="8" y1="11" x2="8" y2="7"></line>
-    <line x1="16" y1="11" x2="16" y2="7"></line>
-    <rect x="6" y="2" width="4" height="5" rx="1"></rect>
-    <rect x="14" y="2" width="4" height="5" rx="1"></rect>
-  </svg>
-);
-
 const AllIcons = [
-  CpuIcon, DatabaseIcon, CodeIcon, ServerIcon, NetworkIcon, TerminalIcon, 
-  ShieldIcon, CloudIcon, GearIcon, BrainIcon, RobotIcon
+  CpuIcon, DatabaseIcon, CodeIcon, ServerIcon, NetworkIcon, TerminalIcon, ShieldIcon, GearIcon
 ];
 
 export default function Signup() {
@@ -120,6 +147,7 @@ export default function Signup() {
     department: ""
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -159,19 +187,17 @@ export default function Signup() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[#FFF8F0] overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center bg-[#FFF8F0] overflow-hidden py-8">
       
-      {/* Modern Animated Background with Engineering Icons */}
+      {/* Animated Background - Unchanged */}
       <div className="absolute inset-0">
-        {/* Gradient Orbs */}
         <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-[#C08552]/10 rounded-full blur-3xl animate-float-slow" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#8C5A3C]/10 rounded-full blur-3xl animate-float-slow" style={{ animationDelay: "2s" }} />
         <div className="absolute top-[40%] left-[30%] w-[400px] h-[400px] bg-[#4B2E2B]/5 rounded-full blur-3xl animate-pulse-slow" />
         
-        {/* Floating Engineering Icons */}
-        {[...Array(60)].map((_, i) => {
+        {[...Array(50)].map((_, i) => {
           const IconComponent = AllIcons[i % AllIcons.length];
-          const size = 12 + Math.random() * 32;
+          const size = 12 + Math.random() * 28;
           return (
             <div
               key={`icon-${i}`}
@@ -179,9 +205,9 @@ export default function Signup() {
               style={{
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
-                animationDuration: `${10 + Math.random() * 25}s`,
-                animationDelay: `${Math.random() * 8}s`,
-                opacity: 0.08 + Math.random() * 0.2,
+                animationDuration: `${12 + Math.random() * 20}s`,
+                animationDelay: `${Math.random() * 6}s`,
+                opacity: 0.08 + Math.random() * 0.15,
               }}
             >
               <div style={{ width: size, height: size }}>
@@ -191,55 +217,42 @@ export default function Signup() {
           );
         })}
 
-        {/* Floating Dots */}
-        {[...Array(80)].map((_, i) => (
+        {[...Array(60)].map((_, i) => (
           <div
             key={`dot-${i}`}
             className="absolute animate-pulse-subtle"
             style={{
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
-              animationDuration: `${2 + Math.random() * 6}s`,
-              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${2 + Math.random() * 5}s`,
+              animationDelay: `${Math.random() * 3}s`,
             }}
           >
             <div
-              className={`bg-[${["#C08552", "#8C5A3C", "#4B2E2B"][Math.floor(Math.random() * 3)]}]/${10 + Math.floor(Math.random() * 25)} rounded-full`}
+              className={`bg-[${["#C08552", "#8C5A3C", "#4B2E2B"][Math.floor(Math.random() * 3)]}]/${15 + Math.floor(Math.random() * 20)} rounded-full`}
               style={{
-                width: `${1 + Math.random() * 5}px`,
-                height: `${1 + Math.random() * 5}px`,
+                width: `${2 + Math.random() * 4}px`,
+                height: `${2 + Math.random() * 4}px`,
               }}
             />
           </div>
         ))}
-
-        {/* Binary floating numbers */}
-        {[...Array(40)].map((_, i) => (
-          <div
-            key={`binary-${i}`}
-            className="absolute animate-float-gentle text-[#C08552] font-mono text-xs"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDuration: `${10 + Math.random() * 20}s`,
-              animationDelay: `${Math.random() * 5}s`,
-              opacity: 0.05 + Math.random() * 0.1,
-            }}
-          >
-            {Math.random() > 0.5 ? "1" : "0"}
-          </div>
-        ))}
       </div>
 
-      {/* Modern Signup Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-[#C08552]/20 animate-slide-up">
+      {/* Signup Card - Reduced padding */}
+      <div className="relative z-10 w-full max-w-sm bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-6 border border-[#C08552]/20 animate-slide-up">
         
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
+        {/* Logo - Smaller */}
+        <div className="flex justify-center mb-5">
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#C08552] to-[#8C5A3C] rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-500" />
-            <div className="relative w-16 h-16 bg-gradient-to-br from-[#C08552] to-[#4B2E2B] rounded-xl flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-105 duration-300">
-              <svg width="32" height="32" viewBox="0 0 100 100" className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#C08552] to-[#8C5A3C] rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500" />
+            <div className="relative w-12 h-12 bg-gradient-to-br from-[#C08552] to-[#4B2E2B] rounded-lg flex items-center justify-center shadow-md transform transition-transform group-hover:scale-105 duration-300">
+              
+               <img 
+  src="/logo.png" 
+  alt="Logo"
+  className="w-full h-full object-cover"
+/><svg width="24" height="24" viewBox="0 0 100 100" className="relative">
                 <path d="M25 25 L25 75 L75 75" stroke="#FFF8F0" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M55 35 L75 50 L55 65" stroke="#C08552" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -247,100 +260,123 @@ export default function Signup() {
           </div>
         </div>
 
-        {/* Welcome Text */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-[#4B2E2B] mb-2 tracking-tight">
-            Create Account
+        {/* Header - Smaller margins */}
+        <div className="text-center mb-5">
+          <h1 className="text-2xl font-bold text-[#4B2E2B] mb-1 tracking-tight">
+            Create account
           </h1>
-          <p className="text-[#8C5A3C] text-sm">
-            Join Levgress and start your journey
+          <p className="text-xs text-[#8C5A3C]">
+            Get started with Levgress
           </p>
         </div>
 
-        {/* Error Alert */}
+        {/* Error Alert - Smaller */}
         {error && (
-          <div className="mb-6 p-3 rounded-xl bg-red-50 border-l-4 border-red-500 text-red-700 text-sm animate-shake">
+          <div className="mb-4 p-2 rounded-lg bg-red-50 border-l-4 border-red-500 text-red-700 text-xs animate-shake">
             <span className="font-medium">Error:</span> {error}
           </div>
         )}
 
-        {/* Signup Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form - Tighter spacing */}
+        <form onSubmit={handleSubmit} className="space-y-3">
           <Input
-            label="Full Name"
+            label="Full name"
             name="name"
             type="text"
             value={form.name}
             onChange={handleChange}
             placeholder="John Doe"
-            icon="👤"
+            icon={<UserIcon />}
           />
 
           <Input
-            label="Email Address"
+            label="Email address"
             name="email"
             type="email"
             value={form.email}
             onChange={handleChange}
             placeholder="you@example.com"
-            icon="📧"
+            icon={<MailIcon />}
           />
 
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Create a strong password"
-            icon="🔒"
-          />
+          <div>
+            <label className="block text-xs font-semibold text-[#4B2E2B] mb-1.5">
+              Password
+            </label>
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8C5A3C]">
+                <LockIcon />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                required
+                onChange={handleChange}
+                placeholder="Create a strong password"
+                className="w-full rounded-lg border border-[#C08552]/30 bg-white/50 px-3 py-2 text-sm text-[#4B2E2B] placeholder:text-[#8C5A3C]/50 outline-none transition-all focus:border-[#C08552] focus:ring-2 focus:ring-[#C08552]/20 focus:bg-white pl-8 pr-8"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8C5A3C] hover:text-[#C08552] transition-colors"
+              >
+                {showPassword ? <EyeClosedIcon /> : <EyeOpenIcon />}
+              </button>
+            </div>
+          </div>
 
           {/* Role Selection */}
           <div>
-            <label className="block text-sm font-semibold text-[#4B2E2B] mb-2">
-              Select Role
+            <label className="block text-xs font-semibold text-[#4B2E2B] mb-1.5">
+              Account type
             </label>
-            <div className="flex gap-4">
-              <label className="flex-1 cursor-pointer">
-                <input
-                  type="radio"
-                  name="role"
-                  value="STUDENT"
-                  checked={form.role === "STUDENT"}
-                  onChange={handleChange}
-                  className="hidden peer"
-                />
-                <div className="p-3 rounded-xl border border-[#C08552]/30 bg-white/50 text-center transition-all peer-checked:border-[#C08552] peer-checked:bg-[#C08552]/10 peer-checked:shadow-md">
-                  <span className="text-2xl block mb-1">🎓</span>
-                  <span className={`text-sm font-medium ${form.role === "STUDENT" ? "text-[#C08552]" : "text-[#4B2E2B]"}`}>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, role: "STUDENT" })}
+                className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all duration-200 ${
+                  form.role === "STUDENT"
+                    ? "border-[#C08552] bg-[#C08552]/10 shadow-sm"
+                    : "border-[#C08552]/30 bg-white/50 hover:border-[#C08552]/60"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-0.5">
+                  <svg className={`w-4 h-4 ${form.role === "STUDENT" ? "text-[#C08552]" : "text-[#8C5A3C]"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M22 10v6M2 10l10-5 10-5-10 5z" />
+                    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
+                  </svg>
+                  <span className={`text-xs font-medium ${form.role === "STUDENT" ? "text-[#C08552]" : "text-[#4B2E2B]"}`}>
                     Student
                   </span>
                 </div>
-              </label>
-              <label className="flex-1 cursor-pointer">
-                <input
-                  type="radio"
-                  name="role"
-                  value="STAFF"
-                  checked={form.role === "STAFF"}
-                  onChange={handleChange}
-                  className="hidden peer"
-                />
-                <div className="p-3 rounded-xl border border-[#C08552]/30 bg-white/50 text-center transition-all peer-checked:border-[#C08552] peer-checked:bg-[#C08552]/10 peer-checked:shadow-md">
-                  <span className="text-2xl block mb-1">👨‍🏫</span>
-                  <span className={`text-sm font-medium ${form.role === "STAFF" ? "text-[#C08552]" : "text-[#4B2E2B]"}`}>
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, role: "STAFF" })}
+                className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all duration-200 ${
+                  form.role === "STAFF"
+                    ? "border-[#C08552] bg-[#C08552]/10 shadow-sm"
+                    : "border-[#C08552]/30 bg-white/50 hover:border-[#C08552]/60"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-0.5">
+                  <svg className={`w-4 h-4 ${form.role === "STAFF" ? "text-[#C08552]" : "text-[#8C5A3C]"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                  </svg>
+                  <span className={`text-xs font-medium ${form.role === "STAFF" ? "text-[#C08552]" : "text-[#4B2E2B]"}`}>
                     Staff
                   </span>
                 </div>
-              </label>
+              </button>
             </div>
           </div>
 
           {/* Student-specific fields */}
           {form.role === "STUDENT" && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3 animate-fade-in">
+              <div className="grid grid-cols-2 gap-2">
                 <Input
                   label="Batch"
                   name="batch"
@@ -348,7 +384,7 @@ export default function Signup() {
                   value={form.batch}
                   onChange={handleChange}
                   placeholder="2024"
-                  icon="📅"
+                  icon={<CalendarIcon />}
                 />
                 <Input
                   label="Department"
@@ -356,8 +392,8 @@ export default function Signup() {
                   type="text"
                   value={form.department}
                   onChange={handleChange}
-                  placeholder="Computer Science"
-                  icon="🏛️"
+                  placeholder="CS"
+                  icon={<BuildingIcon />}
                 />
               </div>
             </div>
@@ -366,28 +402,28 @@ export default function Signup() {
           <button
             type="submit"
             disabled={loading}
-            className="relative w-full py-3 rounded-xl bg-gradient-to-r from-[#C08552] to-[#8C5A3C] hover:from-[#8C5A3C] hover:to-[#4B2E2B] text-white font-semibold transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:hover:scale-100 shadow-lg overflow-hidden group mt-6"
+            className="relative w-full py-2 rounded-lg bg-gradient-to-r from-[#C08552] to-[#8C5A3C] hover:from-[#8C5A3C] hover:to-[#4B2E2B] text-white font-semibold text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:hover:scale-100 shadow-md overflow-hidden group mt-2"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               {loading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Creating account...
                 </>
               ) : (
-                "Create Account"
+                "Create account"
               )}
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500" />
           </button>
         </form>
 
-        {/* Sign In Link */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-[#8C5A3C]">
+        {/* Sign In Link - Tighter */}
+        <div className="mt-4 text-center">
+          <p className="text-xs text-[#8C5A3C]">
             Already have an account?{" "}
             <Link
               to="/login"
@@ -398,9 +434,9 @@ export default function Signup() {
           </p>
         </div>
 
-        {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-[#C08552]/10">
-          <p className="text-xs text-[#8C5A3C]/50 text-center">
+        {/* Footer - Tighter */}
+        <div className="mt-4 pt-3 border-t border-[#C08552]/10">
+          <p className="text-[10px] text-[#8C5A3C]/50 text-center">
             © {new Date().getFullYear()} Levgress. All rights reserved.
           </p>
         </div>
@@ -410,7 +446,7 @@ export default function Signup() {
         @keyframes slide-up {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
@@ -420,35 +456,35 @@ export default function Signup() {
         
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
         }
         
         @keyframes float-slow {
           0%, 100% { transform: translate(0, 0); }
-          33% { transform: translate(30px, -30px); }
-          66% { transform: translate(-20px, 20px); }
+          33% { transform: translate(25px, -25px); }
+          66% { transform: translate(-15px, 15px); }
         }
         
         @keyframes float-gentle {
           0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.08; }
-          50% { transform: translate(15px, -15px) rotate(10deg); opacity: 0.25; }
+          50% { transform: translate(12px, -12px) rotate(8deg); opacity: 0.2; }
         }
         
         @keyframes pulse-slow {
           0%, 100% { opacity: 0.1; transform: scale(1); }
-          50% { opacity: 0.2; transform: scale(1.1); }
+          50% { opacity: 0.2; transform: scale(1.08); }
         }
         
         @keyframes pulse-subtle {
           0%, 100% { opacity: 0.15; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.5); }
+          50% { opacity: 0.45; transform: scale(1.4); }
         }
         
         @keyframes fade-in {
           from {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(-5px);
           }
           to {
             opacity: 1;
@@ -457,58 +493,58 @@ export default function Signup() {
         }
         
         .animate-slide-up {
-          animation: slide-up 0.5s ease-out;
+          animation: slide-up 0.4s ease-out;
         }
         
         .animate-shake {
-          animation: shake 0.3s ease-in-out;
+          animation: shake 0.25s ease-in-out;
         }
         
         .animate-float-slow {
-          animation: float-slow 20s ease-in-out infinite;
+          animation: float-slow 18s ease-in-out infinite;
         }
         
         .animate-float-gentle {
-          animation: float-gentle 15s ease-in-out infinite;
+          animation: float-gentle 14s ease-in-out infinite;
         }
         
         .animate-pulse-slow {
-          animation: pulse-slow 8s ease-in-out infinite;
+          animation: pulse-slow 7s ease-in-out infinite;
         }
         
         .animate-pulse-subtle {
-          animation: pulse-subtle 4s ease-in-out infinite;
+          animation: pulse-subtle 3.5s ease-in-out infinite;
         }
         
         .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
+          animation: fade-in 0.2s ease-out;
         }
       `}</style>
     </div>
   );
 }
 
-// Improved Reusable Input Component
+// Reusable Input Component with SVG icon - Smaller
 function Input({ label, name, type = "text", value, onChange, placeholder, icon }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-[#4B2E2B] mb-2">
+      <label className="block text-xs font-semibold text-[#4B2E2B] mb-1">
         {label}
       </label>
       <div className="relative">
         {icon && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8C5A3C] text-lg">
+          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8C5A3C]">
             {icon}
-          </span>
+          </div>
         )}
         <input
           type={type}
           name={name}
           value={value}
-          required
+          required={name !== "batch" && name !== "department"}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full rounded-xl border border-[#C08552]/30 bg-white/50 px-4 py-3 text-[#4B2E2B] placeholder:text-[#8C5A3C]/50 outline-none transition-all focus:border-[#C08552] focus:ring-2 focus:ring-[#C08552]/20 focus:bg-white ${icon ? 'pl-10' : ''}`}
+          className={`w-full rounded-lg border border-[#C08552]/30 bg-white/50 px-3 py-1.5 text-sm text-[#4B2E2B] placeholder:text-[#8C5A3C]/50 outline-none transition-all focus:border-[#C08552] focus:ring-2 focus:ring-[#C08552]/20 focus:bg-white ${icon ? 'pl-8' : ''}`}
         />
       </div>
     </div>
