@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -181,4 +182,120 @@
     right: 0;
     border-right-color: var(--border);
   }
+=======
+/* index.css - Global styles for Levgress */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* Reset & Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #FFF8F0;
+  color: #4B2E2B;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove default Vite/React root styles */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  color: #4B2E2B;
+}
+
+p {
+  line-height: 1.5;
+}
+
+/* Links */
+a {
+  color: #C08552;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #8C5A3C;
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Form Elements */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Focus Styles */
+*:focus-visible {
+  outline: 2px solid #C08552;
+  outline-offset: 2px;
+}
+
+/* Utility Classes */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #E8DCD0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C08552;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8C5A3C;
+}
+
+/* Selection Color */
+::selection {
+  background-color: #C08552;
+  color: white;
+>>>>>>> 98f2d37ed79d773a85ca87f30d06d58e3ba4e88f
+}
+
+::-moz-selection {
+  background-color: #C08552;
+  color: white;
 }
