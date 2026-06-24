@@ -1,62 +1,55 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+
+const skillProgressSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  category: {
+    type: String,
+    required: true,
+  },
+  level: {
+    type: Number,
+    default: 1,
+  },
+  xp: {
+    type: Number,
+    default: 0,
+  },
+});
 
 const studentStatsSchema = new mongoose.Schema(
   {
-    studentId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      unique: true,
+      ref: 'User',
       required: true,
+      unique: true,
     },
-
+    xp: {
+      type: Number,
+      default: 0,
+    },
     level: {
       type: Number,
       default: 1,
     },
-
-    currentXP: {
+    streak: {
       type: Number,
       default: 0,
     },
-
-    lifetimeXP: {
-      type: Number,
-      default: 0,
-    },
-
-    learnedSkillsCount: {
-      type: Number,
-      default: 0,
-    },
-
-    completedProjectsCount: {
-      type: Number,
-      default: 0,
-    },
-
-    lastActivityAt: {
+    lastActive: {
       type: Date,
       default: Date.now,
     },
-
-    currentStreak: {
-      type: Number,
-      default: 0,
-    },
-
-    longestStreak: {
-      type: Number,
-      default: 0,
-    },
-
-    lastActiveDate: {
-      type: Date,
-    },
-
-    activityDates: [Date],
-
+    skills: [skillProgressSchema],
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("StudentStats", studentStatsSchema);
+const StudentStats = mongoose.model('StudentStats', studentStatsSchema);
+
+module.exports = StudentStats;

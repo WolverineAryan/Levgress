@@ -1,2 +1,104 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg-primary: #0a0908;
+  --color-bg-secondary: #12100e;
+  --color-bg-card: #1c1815;
+  --color-bg-elevated: #28221e;
+  
+  --color-border-primary: rgba(192, 133, 82, 0.15);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  
+  --color-accent-primary: #c08552;
+  --color-accent-hover: #d49c6a;
+  --color-accent-glow: rgba(192, 133, 82, 0.4);
+  
+  --color-text-primary: #f4efe9;
+  --color-text-secondary: #a6998c;
+  --color-text-muted: #6b5f54;
+  
+  --color-status-success: #4ade80;
+  --color-status-warning: #fbbf24;
+  --color-status-danger: #f87171;
+  --color-status-info: #60a5fa;
+
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px var(--color-accent-glow), 0 0 10px var(--color-accent-glow);
+    }
+    to {
+      box-shadow: 0 0 20px var(--color-accent-glow), 0 0 30px var(--color-accent-glow);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+}
+
+/* Global Reset and Styles */
+html, body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bg-elevated) var(--color-bg-primary);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-elevated);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-primary);
+}
+
+/* Spatial Glassmorphism Card Style */
+.glass-card {
+  background: rgba(28, 24, 21, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: var(--color-border-primary);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(192, 133, 82, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Ambient glow backgrounds */
+.ambient-glow {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(192, 133, 82, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}

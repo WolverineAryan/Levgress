@@ -1,16 +1,28 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const masterSkillSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true
+const masterSkillSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    category: {
+      type: String,
+      required: true,
+      enum: ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile', 'Other'],
+    },
+    description: {
+      type: String,
+      default: '',
+    },
   },
-  category: String,
-  xpReward: {
-    type: Number,
-    default: 50
+  {
+    timestamps: true,
   }
-});
+);
 
-module.exports = mongoose.model("MasterSkill", masterSkillSchema);
+const MasterSkill = mongoose.model('MasterSkill', masterSkillSchema);
+
+module.exports = MasterSkill;

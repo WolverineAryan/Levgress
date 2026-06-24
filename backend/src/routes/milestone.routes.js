@@ -1,32 +1,16 @@
-const express = require("express");
+const express = require('express');
+const milestoneController = require('../controllers/milestone.controller');
+const { protect, restrictTo } = require('../middleware/auth.middleware');
+
 const router = express.Router();
-const upload = require("../middleware/upload");
-const auth = require("../middleware/auth.middleware");
-const role = require("../middleware/role.middleware");
-const milestoneController = require("../controllers/milestone.controller");
 
-/* GET MILESTONES */
-router.get(
-  "/:projectId",
-  auth,
-  milestoneController.getMilestones
-);
+router.use(protect);
 
-/* ADD MILESTONE (optional) */
-router.post(
-  "/:projectId",
-  auth,
-  role("STUDENT"),
-  milestoneController.addMilestone
-);
+// Student submits evidence for a milestone
+router.post('/:id/submit', restrictTo('STUDENT'), milestoneController.submitEvidence);
 
-/* UPLOAD EVIDENCE  */
-router.put(
-  "/:id/evidence",
-  auth,
-  role("STUDENT"),
-  upload.single("file"),
-  milestoneController.uploadEvidence
-);
+// Instructor manual validation/override endpoints
+router.post('/:id/approve', restrictTo('STAFF'), milestoneController.staffApproveMilestone);
+router.post('/:id/reject', restrictTo('STAFF'), milestoneController.staffRejectMilestone);
 
 module.exports = router;

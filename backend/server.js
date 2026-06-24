@@ -1,47 +1,40 @@
-require("dotenv").config();
+const http = require('http');
+const app = require('./src/app');
+const config = require('./src/config/env');
+const connectDB = require('./src/config/db');
+const socketConfig = require('./src/config/socket');
+const logger = require('./src/utils/logger');
 
-const app = require("./app");
-const connectDB = require("./src/config/db");
-
-require("./src/events/listeners");
-require("./src/jobs/stagnation.job");
-
-const http = require("http");
-const { Server } = require("socket.io");
-
-const PORT = process.env.PORT || 5000;
-
-// ---------------- DB ----------------
+// Connect to MongoDB database
 connectDB();
 
-// ---------------- ROUTES ----------------
-const analyticsRoutes = require("./src/routes/analytics.routes");
-const aiInsightsRoutes = require("./src/routes/aiInsights.routes");
-const dashboardRoutes = require("./src/routes/dashboard.routes");
-app.use("/api/dashboard", dashboardRoutes);
-
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/ai-insights", aiInsightsRoutes);
-
-// ---------------- STATIC FILES ----------------
-app.use("/uploads", require("express").static("uploads"));
-
-// ---------------- SERVER ----------------
+// Create HTTP server
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: { origin: "*" }
+// Initialize Socket.io
+socketConfig.init(server, {
+  origin: config.clientUrl,
+  methods: ['GET', 'POST'],
+  credentials: true,
 });
 
-global.io = io;
+// Start listening
+const PORT = config.port;
+server.listen(PORT, () => {
+  logger.info(`Server running in ${config.nodeEnv} mode on port ${PORT}`);
+});
 
-io.on("connection", (socket) => {
-  socket.on("join-project", (projectId) => {
-    socket.join(projectId);
+// Handle unhandled promise rejections outside Express
+process.on('unhandledRejection', (err) => {
+  logger.error('UNHANDLED REJECTION! Shutting down...', err);
+  server.close(() => {
+    process.exit(1);
   });
 });
 
-// ---------------- START ----------------
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+process.on('SIGTERM', () => {
+  logger.info('👋 SIGTERM RECEIVED. Shutting down gracefully...');
+  server.close(() => {
+    logger.info('💥 Process terminated!');
+  });
 });

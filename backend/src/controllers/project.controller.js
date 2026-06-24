@@ -1,144 +1,81 @@
-const ProjectMilestone = require("../models/ProjectMilestone");
-const Project = require("../models/Project");
-const User = require("../models/User");
-const XpHistory = require("../models/XpHistory");
+const projectService = require('../services/project.service');
+const asyncHandler = require('../middleware/asyncHandler');
 
-/* ===============================
-   GET MILESTONES
-================================ */
-exports.getMilestones = async (req, res) => {
-  try {
-    const milestones = await ProjectMilestone.find({
-      projectId: req.params.projectId
-    }).sort({ createdAt: 1 });
+const createProject = asyncHandler(async (req, res) => {
+  const project = await projectService.createProject(req.user._id, req.body);
+  res.status(201).json({
+    status: 'success',
+    data: { project },
+  });
+});
 
-    res.json(milestones);
+const getMyProjects = asyncHandler(async (req, res) => {
+  const projects = await projectService.getStudentProjects(req.user._id);
+  res.status(200).json({
+    status: 'success',
+    results: projects.length,
+    data: { projects },
+  });
+});
 
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+const getProjectById = asyncHandler(async (req, res) => {
+  const result = await projectService.getProjectById(req.params.id);
+  res.status(200).json({
+    status: 'success',
+    data: result,
+  });
+});
 
-/* ===============================
-   UPLOAD EVIDENCE (CORE LOGIC)
-================================ */
-exports.uploadEvidence = async (req, res) => {
-  try {
-    const milestone = await ProjectMilestone.findById(req.params.id);
+const updateProject = asyncHandler(async (req, res) => {
+  const project = await projectService.updateProject(req.params.id, req.user._id, req.body);
+  res.status(200).json({
+    status: 'success',
+    data: { project },
+  });
+});
 
-    if (!milestone) {
-      return res.status(404).json({ message: "Milestone not found" });
-    }
+const deleteProject = asyncHandler(async (req, res) => {
+  await projectService.deleteProject(req.params.id, req.user._id);
+  res.status(200).json({
+    status: 'success',
+    message: 'Project successfully deleted',
+  });
+});
 
-    if (milestone.isValidated) {
-      return res.status(400).json({ message: "Already completed" });
-    }
+const addComment = asyncHandler(async (req, res) => {
+  const comment = await projectService.addComment(req.params.id, req.user._id, req.body.text);
+  res.status(201).json({
+    status: 'success',
+    data: { comment },
+  });
+});
 
-    const evidenceUrl = req.body.evidenceUrl;
-    const file = req.file;
+const getComments = asyncHandler(async (req, res) => {
+  const comments = await projectService.getComments(req.params.id);
+  res.status(200).json({
+    status: 'success',
+    results: comments.length,
+    data: { comments },
+  });
+});
 
-    // ---------------- INPUT VALIDATION ----------------
-    if (!file && !evidenceUrl) {
-      return res.status(400).json({
-        message: "Provide file or URL"
-      });
-    }
+// Staff dashboard route: Get all projects
+const getAllProjects = asyncHandler(async (req, res) => {
+  const projects = await projectService.getAllProjects(req.query);
+  res.status(200).json({
+    status: 'success',
+    results: projects.length,
+    data: { projects },
+  });
+});
 
-    // ---------------- TYPE DETECTION ----------------
-    let type = "unknown";
-
-    if (file) {
-      type = "image";
-    } else if (evidenceUrl.includes("github.com")) {
-      type = "github";
-    } else {
-      type = "live";
-    }
-
-    // ---------------- RULE VALIDATION ----------------
-    const m = milestone.title;
-
-    if (m === "Development" && type !== "github") {
-      return res.status(400).json({
-        message: "Development requires GitHub repo"
-      });
-    }
-
-    if (m === "Deployment" && type !== "live") {
-      return res.status(400).json({
-        message: "Deployment requires live URL"
-      });
-    }
-
-    if (m === "UI / Design" && type !== "image") {
-      return res.status(400).json({
-        message: "UI/Design requires image proof"
-      });
-    }
-
-    // ---------------- SAVE EVIDENCE ----------------
-    milestone.status = "COMPLETED";
-    milestone.isValidated = true;
-    milestone.evidenceUrl = evidenceUrl || null;
-    milestone.filePath = file?.path || null;
-
-    await milestone.save();
-
-    // ---------------- PROJECT COMPLETION CHECK ----------------
-    const total = await ProjectMilestone.countDocuments({
-      projectId: milestone.projectId
-    });
-
-    const completed = await ProjectMilestone.countDocuments({
-      projectId: milestone.projectId,
-      status: "COMPLETED"
-    });
-
-    let projectCompleted = false;
-    let xp = null;
-    let level = null;
-
-    if (total === completed) {
-      projectCompleted = true;
-
-      await Project.findByIdAndUpdate(milestone.projectId, {
-        status: "COMPLETED"
-      });
-
-      const user = await User.findById(req.user._id);
-
-      user.xp = (user.xp || 0) + 50;
-      user.level = Math.floor(user.xp / 100) + 1;
-
-      await user.save();
-
-      xp = user.xp;
-      level = user.level;
-
-      await XpHistory.create({
-        studentId: user._id,
-        xpChange: 50,
-        totalXpAfter: user.xp,
-        reason: "Project Completed"
-      });
-    }
-
-    // ---------------- RESPONSE ----------------
-    return res.json({
-      success: true,
-      message: "Milestone validated",
-      milestone,
-      projectCompleted,
-      xp,
-      level
-    });
-
-  } catch (err) {
-    console.error("UPLOAD ERROR:", err);
-
-    res.status(500).json({
-      message: "Server error",
-      error: err.message
-    });
-  }
+module.exports = {
+  createProject,
+  getMyProjects,
+  getProjectById,
+  updateProject,
+  deleteProject,
+  addComment,
+  getComments,
+  getAllProjects,
 };

@@ -1,36 +1,46 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const badgeSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true
+const badgeSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    icon: {
+      type: String,
+      required: true, // Icon name/string (e.g., 'zap', 'award', 'flame')
+    },
+    criteriaType: {
+      type: String,
+      enum: ['PROJECT_COUNT', 'STREAK', 'LEVEL_UP', 'XP_TOTAL', 'AI_SCORE_COUNT', 'SKILL_COUNT'],
+      required: true,
+    },
+    criteriaValue: {
+      type: Number,
+      required: true,
+    },
+    category: {
+      type: String,
+      enum: ['PROJECTS', 'STREAKS', 'LEVELS', 'SPECIAL'],
+      default: 'SPECIAL',
+    },
+    xpReward: {
+      type: Number,
+      default: 200,
+    },
   },
-
-  description: String,
-
-  category: {
-    type: String,
-    enum: ["SKILL", "PROJECT", "LEVEL", "CONSISTENCY"],
-    required: true
-  },
-
-  triggerEvents: {
-    type: [String],
-    required: true
-  },
-
-  criteria: {
-    type: Object, // JSON rules
-    required: true
-  },
-
-  iconUrl: String,
-
-  isActive: {
-    type: Boolean,
-    default: true
+  {
+    timestamps: true,
   }
-}, { timestamps: true });
+);
 
-module.exports = mongoose.model("Badge", badgeSchema);
+const Badge = mongoose.model('Badge', badgeSchema);
+
+module.exports = Badge;

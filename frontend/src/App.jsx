@@ -1,128 +1,130 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/auth/Login";
-import StudentDashboard from "./pages/student/StudentDashboard";
-import StaffDashboard from "./pages/staff/StaffDashboard";
-import ProtectedRoute from "./auth/ProtectedRoute";
-import RoleGuard from "./auth/RoleGuard";
-import Signup from "./pages/auth/Signup";
-import Layout from "./components/layout/Layout";
-import Skills from "./pages/student/Skills";
-import Projects from "./pages/student/Projects";
-import Badges from "./pages/student/Badges";
-import ToastProvider from "./components/notifications/ToastProvider";
-import ProjectReview from "./pages/staff/ProjectReview";
-import Leaderboard from "./pages/student/Leaderboard";
-import AIInsights from "./pages/AIInsights";
-import ProjectDetails from "./pages/ProjectDetails";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { Layout } from './components/layout/Layout';
 
-export default function App() {
+// Import Pages
+import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
+import { StudentDashboard } from './pages/StudentDashboard';
+import { Projects } from './pages/Projects';
+import { ProjectDetails } from './pages/ProjectDetails';
+import { Skills } from './pages/Skills';
+import { Badges } from './pages/Badges';
+import { Leaderboard } from './pages/Leaderboard';
+import { AIInsights } from './pages/AIInsights';
+import { StaffDashboard } from './pages/StaffDashboard';
+import { ProjectReview } from './pages/ProjectReview';
+import { Onboarding } from './pages/Onboarding';
+
+function App() {
   return (
-    <>
-      <ToastProvider />
+    <Router>
+      <AuthProvider>
+        <SocketProvider>
+          <Routes>
+            {/* Public Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+            {/* Onboarding Route */}
+            <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute isOnboardingPage={true}>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            />
 
-        {/* Student */}
-        <Route
-          path="/student"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STUDENT">
-                <Layout>
-                  <StudentDashboard />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
+            {/* Authenticated Layout Routes */}
+            <Route element={<Layout />}>
+              
+              {/* Student Role Routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <StudentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <Projects />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/project/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'STAFF']}>
+                    <ProjectDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/skills"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <Skills />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/badges"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <Badges />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/leaderboard"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'STAFF']}>
+                    <Leaderboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ai-insights"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <AIInsights />
+                  </ProtectedRoute>
+                }
+              />
 
-        <Route
-          path="/student/skills"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STUDENT">
-                <Layout>
-                  <Skills />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
+              {/* Staff/Instructor Role Routes */}
+              <Route
+                path="/staff-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['STAFF']}>
+                    <StaffDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/project-review"
+                element={
+                  <ProtectedRoute allowedRoles={['STAFF']}>
+                    <ProjectReview />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
 
-        <Route
-          path="/student/projects"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STUDENT">
-                <Layout>
-                  <Projects />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/student/badges"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STUDENT">
-                <Layout>
-                  <Badges />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/student/leaderboard"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STUDENT">
-                <Layout>
-                  <Leaderboard />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Staff */}
-        <Route
-          path="/staff"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STAFF">
-                <Layout>
-                  <StaffDashboard />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/staff/projects"
-          element={
-            <ProtectedRoute>
-              <RoleGuard allowedRole="STAFF">
-                <Layout>
-                  <ProjectReview />
-                </Layout>
-              </RoleGuard>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/login" replace />} />
-
-        <Route path="/ai-insights" element={<AIInsights />} />
-
-        <Route path="/project/:projectId" element={<ProjectDetails />} />
-      </Routes>
-    </>
+            {/* Fallback Catch-All Redirect */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </SocketProvider>
+      </AuthProvider>
+    </Router>
   );
 }
+
+export default App;

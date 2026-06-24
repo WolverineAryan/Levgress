@@ -1,43 +1,24 @@
-const express = require("express");
+const express = require('express');
+const projectController = require('../controllers/project.controller');
+const { protect, restrictTo } = require('../middleware/auth.middleware');
+
 const router = express.Router();
 
-const auth = require("../middleware/auth.middleware");
-const role = require("../middleware/role.middleware");
-const upload = require("../middleware/upload");
+// All routes here require authentication
+router.use(protect);
 
-const projectController = require("../controllers/project.controller");
+// Student project CRUD
+router.post('/', restrictTo('STUDENT'), projectController.createProject);
+router.get('/my-projects', restrictTo('STUDENT'), projectController.getMyProjects);
+router.get('/:id', projectController.getProjectById);
+router.put('/:id', restrictTo('STUDENT'), projectController.updateProject);
+router.delete('/:id', restrictTo('STUDENT'), projectController.deleteProject);
 
-// ---------------- STUDENT ----------------
+// Project Comments
+router.post('/:id/comments', projectController.addComment);
+router.get('/:id/comments', projectController.getComments);
 
-// Create project
-router.post("/", auth, role("STUDENT"), projectController.createProject);
-
-// Get my projects
-router.get("/me", auth, role("STUDENT"), projectController.getMyProjects);
-
-// Get project details
-router.get("/:projectId", auth, projectController.getProjectById);
-
-// Update project
-router.put("/:projectId", auth, role("STUDENT"), projectController.updateProject);
-
-// Upload project images
-router.post(
-  "/:projectId/images",
-  auth,
-  role("STUDENT"),
-  upload.array("images", 5),
-  projectController.uploadProjectImages
-);
-
-// ---------------- COMMENTS ----------------
-
-router.get("/:id/comments", auth, projectController.getProjectComments);
-
-router.post("/:id/comment", auth, projectController.addProjectComment);
-
-// ---------------- STAFF ----------------
-
-router.get("/student/:id", auth, projectController.getStudentProjects);
+// Staff dashboard: List all projects across students
+router.get('/', restrictTo('STAFF'), projectController.getAllProjects);
 
 module.exports = router;

@@ -1,24 +1,14 @@
-const express = require("express");
+const express = require('express');
+const authController = require('../controllers/auth.controller');
+const { protect } = require('../middleware/auth.middleware');
+
 const router = express.Router();
-const authController = require("../controllers/auth.controller");
-const authMiddleware = require("../middleware/auth.middleware");
-const { body } = require("express-validator");
-const validate = require("../middleware/validate");
 
-router.post("/login", authController.login);
-router.get("/me", authMiddleware, authController.me);
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+router.post('/firebase-login', authController.firebaseLogin);
+router.get('/me', protect, authController.getMe);
+router.put('/onboard', protect, authController.onboard);
+router.get('/check-username/:username', protect, authController.checkUsername);
 
-// Optional: registration (remove in production)
-router.post("/register", authController.register);
-
-//login
-router.post(
-  "/login",
-  [
-    body("email").isEmail(),
-    body("password").isLength({ min: 6 })
-  ],
-  validate,
-  authController.login
-);
 module.exports = router;
