@@ -13,6 +13,8 @@ const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   groqApiKey: process.env.GROQ_API_KEY || '',
   groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  supabaseUrl: process.env.SUPABASE_URL || '',
+  supabaseKey: process.env.SUPABASE_KEY || '',
 };
 
 // Simple validation

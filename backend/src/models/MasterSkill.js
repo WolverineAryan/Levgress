@@ -17,6 +17,12 @@ const masterSkillSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    type: {
+      type: String,
+      enum: ['TECHNOLOGY', 'SKILL'],
+      default: 'TECHNOLOGY',
+      required: true,
+    },
   },
   {
     timestamps: true,

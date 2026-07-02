@@ -11,3 +11,31 @@ export const register = (name, email, password, role) => {
 export const getMe = () => {
   return api.get('/auth/me');
 };
+
+export const onboard = (onboardingData) => {
+  return api.put('/auth/onboard', onboardingData);
+};
+
+export const updateProfile = (profileData) => {
+  return api.put('/auth/update-profile', profileData);
+};
+
+export const updatePassword = (passwords) => {
+  return api.put('/auth/update-password', passwords);
+};
+
+export const toggle2FA = () => {
+  return api.post('/auth/toggle-2fa');
+};
+
+export const verify2FA = (token) => {
+  return api.post('/auth/verify-2fa', { token });
+};
+
+export const deleteAccount = () => {
+  return api.delete('/auth/delete-account');
+};
+
+export const reportIssue = (issueData) => {
+  return api.post('/auth/report-issue', issueData);
+};

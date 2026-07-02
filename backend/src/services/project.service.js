@@ -1,4 +1,5 @@
 const Project = require('../models/Project');
+const supabaseService = require('./supabase.service');
 const Milestone = require('../models/Milestone');
 const Comment = require('../models/Comment');
 const ActivityLog = require('../models/ActivityLog');
@@ -114,6 +115,27 @@ const updateProject = async (projectId, studentId, updateData) => {
     }
   });
 
+  if (updateData.screenshots !== undefined) {
+    const uploadedScreenshots = [];
+    for (const screenshot of updateData.screenshots) {
+      if (screenshot.fileData && screenshot.fileData.startsWith('data:')) {
+        const publicUrl = await supabaseService.uploadBase64File(
+          screenshot.fileData,
+          'levgress-assets',
+          `projects/${projectId}`,
+          `screenshot_${screenshot.fileName.replace(/\s+/g, '_')}`
+        );
+        uploadedScreenshots.push({
+          fileName: screenshot.fileName,
+          fileData: publicUrl,
+        });
+      } else {
+        uploadedScreenshots.push(screenshot);
+      }
+    }
+    project.screenshots = uploadedScreenshots;
+  }
+
   await project.save();
   return project;
 };
@@ -136,7 +158,7 @@ const deleteProject = async (projectId, studentId) => {
   return { success: true };
 };
 
-const addComment = async (projectId, authorId, text) => {
+const addComment = async (projectId, authorId, text, parentId = null) => {
   if (!text) {
     throw new ValidationError('Comment text is required');
   }
@@ -146,23 +168,35 @@ const addComment = async (projectId, authorId, text) => {
     throw new NotFoundError('Project not found');
   }
 
+  const User = require('../models/User');
+  const author = await User.findById(authorId);
+  if (!author) {
+    throw new NotFoundError('User not found');
+  }
+
+  // Only instructors (STAFF) can post root questions/remarks
+  if (!parentId && author.role !== 'STAFF') {
+    throw new ForbiddenError('Only instructors can post new remarks or questions.');
+  }
+
   const comment = await Comment.create({
     project: projectId,
     author: authorId,
     text,
+    parent: parentId || null,
   });
 
   // Populate author details
   const populatedComment = await comment.populate('author', 'name email avatar role');
 
   // Notify student if a staff member commented
-  const author = populatedComment.author;
-  if (author.role === 'STAFF' && project.student._id.toString() !== authorId.toString()) {
+  const commentAuthor = populatedComment.author;
+  if (commentAuthor.role === 'STAFF' && project.student._id.toString() !== authorId.toString()) {
     const notificationService = require('./notification.service');
     await notificationService.createNotification(
       project.student._id,
       'COMMENT_ADDED',
-      `Instructor ${author.name} commented on your project "${project.title}"`,
+      `Instructor ${commentAuthor.name} commented on your project "${project.title}"`,
       `/project/${projectId}`
     );
   }

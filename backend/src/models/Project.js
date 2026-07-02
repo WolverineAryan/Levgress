@@ -36,6 +36,12 @@ const projectSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    screenshots: [
+      {
+        fileName: { type: String, default: '' },
+        fileData: { type: String, default: '' },
+      },
+    ],
   },
   {
     timestamps: true,

@@ -2,9 +2,16 @@ import { ResponsiveContainer, RadarChart as RechartsRadar, PolarGrid, PolarAngle
 
 export const RadarChart = ({ data = [] }) => {
   // Format data for radar
+  const tierValues = {
+    UNVERIFIED: 20,
+    BASIC: 50,
+    INTERMEDIATE: 75,
+    MASTER: 100,
+  };
+
   const chartData = data.map((s) => ({
     subject: s.name,
-    A: s.level * 20, // Normalize to scale of 100 (assuming max level 5 represents 100)
+    A: tierValues[s.tier] || 20,
     fullMark: 100,
   }));
 

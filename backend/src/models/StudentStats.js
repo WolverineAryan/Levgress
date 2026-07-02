@@ -9,13 +9,16 @@ const skillProgressSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  level: {
-    type: Number,
-    default: 1,
+  tier: {
+    type: String,
+    enum: ['UNVERIFIED', 'BASIC', 'INTERMEDIATE', 'MASTER'],
+    default: 'UNVERIFIED',
   },
-  xp: {
-    type: Number,
-    default: 0,
+  type: {
+    type: String,
+    enum: ['TECHNOLOGY', 'SKILL'],
+    default: 'TECHNOLOGY',
+    required: true,
   },
 });
 

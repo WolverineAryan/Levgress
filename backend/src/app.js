@@ -27,10 +27,10 @@ app.use(
   })
 );
 
-// Rate Limiting (100 requests per 15 minutes)
+// Rate Limiting (1000 requests per 15 minutes for production responsiveness)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: 'Too many requests from this IP, please try again in 15 minutes',
   standardHeaders: true,
   legacyHeaders: false,

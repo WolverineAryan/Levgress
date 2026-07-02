@@ -1,4 +1,5 @@
 const Milestone = require('../models/Milestone');
+const supabaseService = require('./supabase.service');
 const Project = require('../models/Project');
 const ActivityLog = require('../models/ActivityLog');
 const aiEvaluationService = require('./aiEvaluation.service');
@@ -21,52 +22,97 @@ const submitEvidence = async (milestoneId, studentId, evidenceData) => {
     throw new ValidationError('This milestone is locked. Complete previous milestones first.');
   }
 
-  const { type, text, url, fileName, fileData } = evidenceData;
+  const { type, text, url, fileName, fileData, files } = evidenceData;
 
-  // Update milestone status to SUBMITTED
-  milestone.status = 'SUBMITTED';
-  milestone.evidence = {
-    type: type || 'TEXT',
-    text: text || '',
-    url: url || '',
-    fileName: fileName || '',
-    fileData: fileData || '',
-    submittedAt: new Date(),
-  };
-  await milestone.save();
+  let uploadedFileData = fileData || '';
+  if (uploadedFileData && uploadedFileData.startsWith('data:')) {
+    const publicUrl = await supabaseService.uploadBase64File(
+      uploadedFileData,
+      'levgress-assets',
+      `milestones/${milestoneId}`,
+      `evidence_${fileName.replace(/\s+/g, '_')}`
+    );
+    uploadedFileData = publicUrl;
+  }
 
-  // Log activity
-  await ActivityLog.create({
-    student: studentId,
-    activityType: 'MILESTONE_SUBMIT',
-    details: `Submitted ${type || 'TEXT'} evidence for Milestone ${milestone.index} on project "${project.title}"`,
-  });
+  let uploadedFiles = [];
+  if (files && Array.isArray(files)) {
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      let fData = f.fileData || '';
+      if (fData && fData.startsWith('data:')) {
+        const publicUrl = await supabaseService.uploadBase64File(
+          fData,
+          'levgress-assets',
+          `milestones/${milestoneId}`,
+          `evidence_${i}_${f.fileName.replace(/\s+/g, '_')}`
+        );
+          fData = publicUrl;
+      }
+      uploadedFiles.push({
+        fileName: f.fileName,
+        fileData: fData
+      });
+    }
+  }
 
-  // Trigger AI evaluation asynchronously (or synchronously for user feedback)
-  const evaluation = await aiEvaluationService.evaluateEvidence(
-    project,
-    milestone,
-    milestone.evidence
-  );
+  // Save original status
+  const originalStatus = milestone.status;
+  const originalEvidence = milestone.evidence;
 
-  milestone.aiScore = evaluation.score;
-  milestone.aiFeedback = evaluation.feedback;
-
-  const PASS_SCORE = 80;
-  if (evaluation.score >= PASS_SCORE) {
-    // Complete milestone
-    await completeMilestone(milestone, project, studentId, `AI Validation Passed (${evaluation.score}/100)`);
-  } else {
-    // Reject milestone
-    milestone.status = 'REJECTED';
+  try {
+    // Update milestone status to SUBMITTED
+    milestone.status = 'SUBMITTED';
+    milestone.evidence = {
+      type: type || 'TEXT',
+      text: text || '',
+      url: url || '',
+      fileName: fileName || '',
+      fileData: uploadedFileData,
+      files: uploadedFiles,
+      submittedAt: new Date(),
+    };
     await milestone.save();
 
-    await notificationService.createNotification(
-      studentId,
-      'MILESTONE_REJECTED',
-      `Milestone ${milestone.index} of "${project.title}" was not approved by AI (Score: ${evaluation.score}/100).`,
-      `/project/${project._id}`
+    // Log activity
+    await ActivityLog.create({
+      student: studentId,
+      activityType: 'MILESTONE_SUBMIT',
+      details: `Submitted ${type || 'TEXT'} evidence for Milestone ${milestone.index} on project "${project.title}"`,
+    });
+
+    // Trigger AI evaluation asynchronously (or synchronously for user feedback)
+    const evaluation = await aiEvaluationService.evaluateEvidence(
+      project,
+      milestone,
+      milestone.evidence
     );
+
+    milestone.aiScore = evaluation.score;
+    milestone.aiFeedback = evaluation.feedback;
+
+    const PASS_SCORE = 80;
+    if (evaluation.score >= PASS_SCORE) {
+      // Complete milestone
+      await completeMilestone(milestone, project, studentId, `AI Validation Passed (${evaluation.score}/100)`);
+    } else {
+      // Reject milestone
+      milestone.status = 'REJECTED';
+      await milestone.save();
+
+      await notificationService.createNotification(
+        studentId,
+        'MILESTONE_REJECTED',
+        `Milestone ${milestone.index} of "${project.title}" was not approved by AI (Score: ${evaluation.score}/100).`,
+        `/project/${project._id}`
+      );
+    }
+  } catch (error) {
+    // Revert status and evidence if evaluation fails!
+    milestone.status = originalStatus;
+    milestone.evidence = originalEvidence;
+    await milestone.save();
+    throw error;
   }
 
   return milestone;
@@ -132,6 +178,11 @@ const completeMilestone = async (milestone, project, studentId, reason) => {
       status: 'COMPLETED',
     });
     await gamificationService.checkAndAwardBadges(studentId, 'PROJECT_COUNT', completedProjectsCount);
+  }
+
+  // Check Bug Hunter badge
+  if (milestone.aiScore && milestone.aiScore >= 95) {
+    await gamificationService.checkAndAwardBadges(studentId, 'BUG_HUNTER', milestone.aiScore);
   }
 };
 

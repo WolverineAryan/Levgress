@@ -57,6 +57,38 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    resumeUrl: {
+      type: String,
+      default: '',
+    },
+    resumeFile: {
+      fileName: { type: String, default: '' },
+      fileData: { type: String, default: '' },
+    },
+    phoneNumber: {
+      type: String,
+      default: '',
+    },
+    batch: {
+      type: String,
+      default: '', // e.g. "Batch 2026", "Section A"
+    },
+    department: {
+      type: String,
+      default: '', // e.g. "Computer Science", "Information Technology"
+    },
+    customBadgeTitle: {
+      type: String,
+      default: '', // e.g. "Core Contributor", "Master Hacker"
+    },
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    twoFactorSecret: {
+      type: String,
+      default: '',
+    },
     onboarded: {
       type: Boolean,
       default: false,

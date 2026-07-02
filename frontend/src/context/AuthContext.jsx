@@ -62,33 +62,68 @@ export const AuthProvider = ({ children }) => {
     setUser(updatedUser);
   };
 
-  const loginWithGoogle = async (role) => {
+  const loginWithProvider = async (providerName, role, mockEmail) => {
     let idToken;
     const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
 
     if (apiKey && apiKey !== 'mock-api-key') {
       try {
         const { signInWithPopup } = await import('firebase/auth');
-        const { auth, googleProvider } = await import('../config/firebase');
-        const result = await signInWithPopup(auth, googleProvider);
+        const { auth } = await import('../config/firebase');
+        
+        let provider;
+        if (providerName === 'github') {
+          const { GithubAuthProvider } = await import('firebase/auth');
+          provider = new GithubAuthProvider();
+        } else {
+          const { GoogleAuthProvider } = await import('firebase/auth');
+          provider = new GoogleAuthProvider();
+        }
+
+        const result = await signInWithPopup(auth, provider);
         idToken = await result.user.getIdToken();
       } catch (err) {
-        console.error('Firebase Google Auth Popup failed:', err);
-        throw err;
+        console.error(`Firebase ${providerName} Auth Popup failed:`, err);
+        if (import.meta.env.PROD) {
+          throw new Error(`Authentication popup failed: ${err.message}`);
+        }
+        const mockEmailInput = mockEmail || prompt(
+          `Firebase Auth failed (${err.message}). Falling back to developer mock mode. Enter a mock email address for local testing:`,
+          providerName === 'github' ? 'new_github_student@levgress.com' : 'new_google_student@levgress.com'
+        );
+        if (!mockEmailInput) {
+          throw err;
+        }
+        idToken = mockEmailInput;
       }
     } else {
-      // Developer Mock Mode
-      const mockEmail = prompt(
-        'Firebase not configured. Enter a mock Gmail address for local testing:',
-        'google_student@levgress.com'
-      );
-      if (!mockEmail) {
-        throw new Error('Google Sign-in cancelled by user.');
+      if (import.meta.env.PROD) {
+        throw new Error(`Authentication system is not configured. Please contact the administrator.`);
       }
-      idToken = mockEmail;
+      // Developer Mock Mode
+      const mockEmailInput = mockEmail || prompt(
+        `Firebase not configured. Enter a mock email address for ${providerName} local testing:`,
+        providerName === 'github' ? 'github_student@levgress.com' : 'google_student@levgress.com'
+      );
+      if (!mockEmailInput) {
+        throw new Error(`${providerName} Sign-in cancelled by user.`);
+      }
+      idToken = mockEmailInput;
     }
 
     const res = await api.post('/auth/firebase-login', { idToken, role });
+
+    if (res.data.data.twoFactorRequired) {
+      // Store the temporary token so that verify-2fa request has auth headers
+      localStorage.setItem('token', res.data.data.tempToken);
+      return {
+        twoFactorRequired: true,
+        tempToken: res.data.data.tempToken,
+        userId: res.data.data.userId,
+        email: res.data.data.email
+      };
+    }
+
     const { token, user: loggedUser } = res.data.data;
 
     localStorage.setItem('token', token);
@@ -97,8 +132,25 @@ export const AuthProvider = ({ children }) => {
     return loggedUser;
   };
 
+  const complete2FA = async (totpToken) => {
+    try {
+      const res = await api.post('/auth/verify-2fa', { token: totpToken });
+      const { token, user: loggedUser } = res.data.data;
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(loggedUser));
+      setUser(loggedUser);
+      return loggedUser;
+    } catch (err) {
+      localStorage.removeItem('token');
+      throw err;
+    }
+  };
+
+  const loginWithGoogle = (role) => loginWithProvider('google', role);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateLocalUser, loginWithGoogle }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateLocalUser, loginWithGoogle, loginWithProvider, complete2FA }}>
       {children}
     </AuthContext.Provider>
   );

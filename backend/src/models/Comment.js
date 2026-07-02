@@ -17,6 +17,11 @@ const commentSchema = new mongoose.Schema(
       required: [true, 'Comment text is required'],
       trim: true,
     },
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment',
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, LogOut, Check } from 'lucide-react';
+import { Bell, LogOut, Check, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import * as notificationsApi from '../../api/notifications';
@@ -13,6 +13,19 @@ export const Navbar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   const fetchNotifications = async () => {
     try {
@@ -92,6 +105,15 @@ export const Navbar = () => {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Dark/Light Mode Toggle */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-2 text-text-secondary hover:text-text-primary rounded-full hover:bg-bg-elevated transition-colors cursor-pointer"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+        </button>
+
         {/* Notifications Bell */}
         {user?.role === 'STUDENT' && (
           <div className="relative" ref={dropdownRef}>
@@ -159,37 +181,6 @@ export const Navbar = () => {
             )}
           </div>
         )}
-
-        {/* User Info & Logout */}
-        <div className="flex items-center gap-3 border-l border-border-subtle pl-4">
-          {user?.avatar && (
-            <img
-              src={user.avatar}
-              alt="Avatar"
-              className="w-8 h-8 rounded-lg border border-accent-primary/20 object-cover bg-bg-elevated shrink-0"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          )}
-          <div className="flex flex-col items-end">
-            <span className="text-xs font-bold text-text-primary">{user?.name}</span>
-            {user?.username && (
-              <span className="text-[10px] text-text-muted font-medium">@{user.username}</span>
-            )}
-            <span className="text-[9px] font-bold text-accent-primary tracking-wider uppercase mt-0.5">
-              {user?.role}
-            </span>
-          </div>
-
-          <button
-            onClick={logout}
-            className="p-2 text-text-secondary hover:text-status-danger rounded-full hover:bg-bg-elevated transition-colors cursor-pointer"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
       </div>
     </nav>
   );

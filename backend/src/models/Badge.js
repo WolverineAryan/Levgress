@@ -19,7 +19,7 @@ const badgeSchema = new mongoose.Schema(
     },
     criteriaType: {
       type: String,
-      enum: ['PROJECT_COUNT', 'STREAK', 'LEVEL_UP', 'XP_TOTAL', 'AI_SCORE_COUNT', 'SKILL_COUNT'],
+      enum: ['PROJECT_COUNT', 'STREAK', 'LEVEL_UP', 'XP_TOTAL', 'AI_SCORE_COUNT', 'SKILL_COUNT', 'BACKEND_SKILLS', 'FRONTEND_SKILLS', 'BUG_HUNTER'],
       required: true,
     },
     criteriaValue: {

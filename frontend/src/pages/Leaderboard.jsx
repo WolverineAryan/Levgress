@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import * as studentsApi from '../api/students';
 import { Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { Trophy, Search, Star, Flame } from 'lucide-react';
@@ -76,32 +77,38 @@ export const Leaderboard = () => {
                   isFirst && "z-10 -translate-y-4"
                 )}
               >
-                {/* Avatar bubble */}
-                <div className={cn(
-                  "relative p-1 rounded-full border mb-2",
-                  isFirst && "border-accent-primary bg-accent-primary/10 shadow-[0_0_15px_var(--color-accent-glow)] animate-float",
-                  isSecond && "border-neutral-400 bg-neutral-400/5",
-                  isThird && "border-amber-750 bg-amber-750/5"
-                )}>
+                <Link to={`/profile/${student.studentId}`} className="flex flex-col items-center hover:opacity-85 transition-opacity">
+                  {/* Avatar bubble */}
                   <div className={cn(
-                    "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-black text-lg bg-bg-card text-text-primary border border-border-subtle"
+                    "relative p-1 rounded-full border mb-2",
+                    isFirst && "border-accent-primary bg-accent-primary/10 shadow-[0_0_15px_var(--color-accent-glow)] animate-float",
+                    isSecond && "border-neutral-400 bg-neutral-400/5",
+                    isThird && "border-amber-750 bg-amber-750/5"
                   )}>
-                    {student.name.charAt(0)}
+                    <div className={cn(
+                      "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-black text-lg bg-bg-card text-text-primary border border-border-subtle overflow-hidden"
+                    )}>
+                      {student.avatar ? (
+                        <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
+                      ) : (
+                        student.name.charAt(0)
+                      )}
+                    </div>
+                    {/* Rank badge */}
+                    <div className={cn(
+                      "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] text-bg-primary border border-bg-card",
+                      isFirst && "bg-accent-primary",
+                      isSecond && "bg-neutral-400",
+                      isThird && "bg-[#d4af37]"
+                    )}>
+                      {student.rank}
+                    </div>
                   </div>
-                  {/* Rank badge */}
-                  <div className={cn(
-                    "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] text-bg-primary border border-bg-card",
-                    isFirst && "bg-accent-primary",
-                    isSecond && "bg-neutral-400",
-                    isThird && "bg-[#d4af37]"
-                  )}>
-                    {student.rank}
-                  </div>
-                </div>
 
-                <span className="text-xs font-bold text-text-primary truncate max-w-[80px] sm:max-w-[100px] text-center">
-                  {student.name}
-                </span>
+                  <span className="text-xs font-bold text-text-primary truncate max-w-[80px] sm:max-w-[100px] text-center">
+                    {student.name}
+                  </span>
+                </Link>
 
                 <span className="text-[10px] text-text-muted font-semibold mt-0.5">
                   Lvl {student.level}
@@ -167,11 +174,17 @@ export const Leaderboard = () => {
                     )}
                   >
                     <td className="py-4 px-4 font-bold text-text-primary">{student.rank}</td>
-                    <td className="py-4 px-4 font-semibold text-text-primary flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-bg-secondary border border-border-subtle flex items-center justify-center font-bold text-[10px]">
-                        {student.name.charAt(0)}
-                      </div>
-                      {student.name}
+                    <td className="py-4 px-4 font-semibold text-text-primary">
+                      <Link to={`/profile/${student.studentId}`} className="flex items-center gap-3 hover:text-accent-primary transition-colors">
+                        <div className="w-7 h-7 rounded-full bg-bg-secondary border border-border-subtle flex items-center justify-center font-bold text-[10px] overflow-hidden">
+                          {student.avatar ? (
+                            <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
+                          ) : (
+                            student.name.charAt(0)
+                          )}
+                        </div>
+                        {student.name}
+                      </Link>
                     </td>
                     <td className="py-4 px-4">
                       <span className="inline-flex items-center gap-1 font-semibold text-text-secondary">

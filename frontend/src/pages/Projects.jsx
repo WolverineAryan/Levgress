@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as projectsApi from '../api/projects';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Badge, CardDescription, GithubIcon } from '../components/ui';
-import { FolderGit, Globe, Plus, Trash2, X } from 'lucide-react';
+import { FolderGit, Globe, Plus, Trash2, X, Edit3 } from 'lucide-react';
 import { formatDate } from '../utils/date';
 
 export const Projects = () => {
@@ -19,6 +19,7 @@ export const Projects = () => {
   const [liveUrl, setLiveUrl] = useState('');
   const [techStack, setTechStack] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
 
   const fetchProjects = async () => {
     try {
@@ -36,7 +37,7 @@ export const Projects = () => {
     fetchProjects();
   }, []);
 
-  const handleCreateProject = async (e) => {
+  const handleSaveProject = async (e) => {
     e.preventDefault();
     if (!title || !description) return;
     setCreateLoading(true);
@@ -47,13 +48,19 @@ export const Projects = () => {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
-      await projectsApi.createProject({
+      const payload = {
         title,
         description,
         githubUrl,
         liveUrl,
         techStack: parsedTech,
-      });
+      };
+
+      if (editingProject) {
+        await projectsApi.updateProject(editingProject._id, payload);
+      } else {
+        await projectsApi.createProject(payload);
+      }
 
       // Reset
       setTitle('');
@@ -61,16 +68,38 @@ export const Projects = () => {
       setGithubUrl('');
       setLiveUrl('');
       setTechStack('');
+      setEditingProject(null);
       setIsModalOpen(false);
       
       // Refresh
       fetchProjects();
     } catch (err) {
       console.error(err);
-      alert('Error creating project: ' + (err.response?.data?.message || err.message));
+      alert(`Error ${editingProject ? 'updating' : 'creating'} project: ` + (err.response?.data?.message || err.message));
     } finally {
       setCreateLoading(false);
     }
+  };
+
+  const handleStartEditProject = (project, e) => {
+    e.stopPropagation();
+    setEditingProject(project);
+    setTitle(project.title || '');
+    setDescription(project.description || '');
+    setGithubUrl(project.githubUrl || '');
+    setLiveUrl(project.liveUrl || '');
+    setTechStack(project.techStack ? project.techStack.join(', ') : '');
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setTitle('');
+    setDescription('');
+    setGithubUrl('');
+    setLiveUrl('');
+    setTechStack('');
+    setEditingProject(null);
+    setIsModalOpen(false);
   };
 
   const handleDeleteProject = async (id, e) => {
@@ -132,12 +161,22 @@ export const Projects = () => {
                   <Badge variant={project.status === 'COMPLETED' ? 'success' : 'primary'}>
                     {project.status}
                   </Badge>
-                  <button
-                    onClick={(e) => handleDeleteProject(project._id, e)}
-                    className="p-1 text-text-muted hover:text-status-danger rounded transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={(e) => handleStartEditProject(project, e)}
+                      className="p-1 text-text-muted hover:text-accent-primary rounded transition-colors cursor-pointer"
+                      title="Edit project"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteProject(project._id, e)}
+                      className="p-1 text-text-muted hover:text-status-danger rounded transition-colors cursor-pointer"
+                      title="Delete project"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <CardTitle className="group-hover:text-accent-primary transition-colors text-base truncate">
@@ -198,16 +237,20 @@ export const Projects = () => {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-bg-card border border-border-primary rounded-2xl w-full max-w-md p-6 relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-text-muted hover:text-text-primary cursor-pointer"
+              onClick={handleCloseModal}
+              className="absolute top-4 right-4 text-text-muted hover:text-text-primary cursor-pointer bg-transparent border-0"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-xl font-bold tracking-tight text-text-primary mb-1">Launch New Project</h2>
-            <p className="text-xs text-text-secondary mb-6">Initialize tracking. This creates 5 milestones automatically.</p>
+            <h2 className="text-xl font-bold tracking-tight text-text-primary mb-1">
+              {editingProject ? 'Edit Project Details' : 'Launch New Project'}
+            </h2>
+            <p className="text-xs text-text-secondary mb-6">
+              {editingProject ? 'Modify your project repository, live link, tech stack, or description.' : 'Initialize tracking. This creates 5 milestones automatically.'}
+            </p>
 
-            <form onSubmit={handleCreateProject} className="flex flex-col space-y-4">
+            <form onSubmit={handleSaveProject} className="flex flex-col space-y-4">
               <Input
                 label="Project Title"
                 placeholder="e.g. Levgress Rebuild"
@@ -253,13 +296,13 @@ export const Projects = () => {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={handleCloseModal}
                   disabled={createLoading}
                 >
                   Cancel
                 </Button>
                 <Button type="submit" loading={createLoading}>
-                  Scaffold Project
+                  {editingProject ? 'Save Changes' : 'Scaffold Project'}
                 </Button>
               </div>
             </form>

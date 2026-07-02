@@ -34,6 +34,12 @@ const milestoneSchema = new mongoose.Schema(
       url: { type: String, default: '' },
       fileName: { type: String, default: '' },
       fileData: { type: String, default: '' },
+      files: [
+        {
+          fileName: { type: String },
+          fileData: { type: String }
+        }
+      ],
       submittedAt: { type: Date },
     },
     aiScore: {

@@ -43,7 +43,7 @@ const deleteProject = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-  const comment = await projectService.addComment(req.params.id, req.user._id, req.body.text);
+  const comment = await projectService.addComment(req.params.id, req.user._id, req.body.text, req.body.parent);
   res.status(201).json({
     status: 'success',
     data: { comment },

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as studentsApi from '../api/students';
 import { Card, CardHeader, CardTitle, CardContent, Badge as Tag, CardDescription } from '../components/ui';
-import { Award, Flame, Rocket, Star, Target, Zap, Book, Shield, Lock } from 'lucide-react';
+import { Award, Flame, Rocket, Star, Target, Zap, Book, Shield, Lock, Server, Layout, BookOpen } from 'lucide-react';
 import { formatDate } from '../utils/date';
 import { cn } from '../utils/classnames';
 
@@ -14,6 +14,9 @@ const BADGE_ICONS = {
   award: Award,
   book: Book,
   shield: Shield,
+  server: Server,
+  layout: Layout,
+  'book-open': BookOpen,
 };
 
 export const Badges = () => {

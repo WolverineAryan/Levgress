@@ -20,14 +20,14 @@ export const deleteProject = (id) => {
   return api.delete(`/projects/${id}`);
 };
 
-export const addComment = (projectId, text) => {
-  return api.post(`/projects/${projectId}/comments`, { text });
+export const addComment = (projectId, text, parent = null) => {
+  return api.post(`/projects/${projectId}/comments`, { text, parent });
 };
 
 export const getComments = (projectId) => {
   return api.get(`/projects/${projectId}/comments`);
 };
 
-export const getAllProjects = () => {
-  return api.get('/projects');
+export const getAllProjects = (params = {}) => {
+  return api.get('/projects', { params });
 };

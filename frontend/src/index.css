@@ -102,3 +102,39 @@ html, body {
   pointer-events: none;
   z-index: 0;
 }
+
+.light {
+  --color-bg-primary: #faf9f6;
+  --color-bg-secondary: #f5f2eb;
+  --color-bg-card: #ffffff;
+  --color-bg-elevated: #e8e4db;
+  
+  --color-border-primary: rgba(168, 100, 42, 0.2);
+  --color-border-subtle: rgba(0, 0, 0, 0.05);
+  
+  --color-accent-primary: #a8642a;
+  --color-accent-hover: #bd773a;
+  --color-accent-glow: rgba(168, 100, 42, 0.15);
+  
+  --color-text-primary: #1b1917;
+  --color-text-secondary: #6e665d;
+  --color-text-muted: #9c9287;
+  
+  --color-status-success: #15803d;
+  --color-status-warning: #b45309;
+  --color-status-danger: #b91c1c;
+  --color-status-info: #1d4ed8;
+}
+
+.light .glass-card {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.light .glass-card:hover {
+  border-color: rgba(168, 100, 42, 0.35);
+  box-shadow: 0 10px 30px -10px rgba(27, 25, 23, 0.08), 0 0 15px rgba(168, 100, 42, 0.03);
+}
+
+.light .ambient-glow {
+  background: radial-gradient(circle, rgba(168, 100, 42, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+}

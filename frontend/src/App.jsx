@@ -17,6 +17,9 @@ import { AIInsights } from './pages/AIInsights';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { ProjectReview } from './pages/ProjectReview';
 import { Onboarding } from './pages/Onboarding';
+import { UserProfile } from './pages/UserProfile';
+import { SkillTester } from './pages/SkillTester';
+import { Settings } from './pages/Settings';
 
 function App() {
   return (
@@ -95,6 +98,30 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['STUDENT']}>
                     <AIInsights />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'STAFF']}>
+                    <UserProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'STAFF']}>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tester"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <SkillTester />
                   </ProtectedRoute>
                 }
               />

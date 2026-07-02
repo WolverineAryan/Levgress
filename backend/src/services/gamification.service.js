@@ -5,23 +5,28 @@ const Milestone = require('../models/Milestone');
 const Badge = require('../models/Badge');
 const StudentBadge = require('../models/StudentBadge');
 const ActivityLog = require('../models/ActivityLog');
+const MasterSkill = require('../models/MasterSkill');
 const notificationService = require('./notification.service');
 const socketConfig = require('../config/socket');
 const { NotFoundError } = require('../utils/AppError');
 
 const MAX_LEVEL = 100;
 
-// Formula: XP needed to level up from level L
+// Formula: XP needed to level up from level L (Optimized progressive curve)
+// Level 1: 250 XP
+// Level 2: 400 XP
+// Level 3: 550 XP
+// Level 4: 700 XP
 const xpForLevelUp = (currentLevel) => {
   if (currentLevel >= MAX_LEVEL) return Infinity; // No more level ups
-  return currentLevel * 100;
+  return 250 + (currentLevel - 1) * 150;
 };
 
-// Calculate cumulative XP (for metrics/leaderboard) in O(1) time
+// Calculate cumulative XP (for metrics/leaderboard) in O(1) time matching the progressive curve
 const getCumulativeXP = (level, currentXP) => {
   const effectiveLevel = Math.min(level, MAX_LEVEL);
-  // Sum of i * 100 from i = 1 to effectiveLevel - 1 is 50 * (effectiveLevel - 1) * effectiveLevel
-  const baseXP = 50 * (effectiveLevel - 1) * effectiveLevel;
+  const n = effectiveLevel - 1;
+  const baseXP = n <= 0 ? 0 : 250 * n + 75 * n * (n - 1);
   return baseXP + currentXP;
 };
 
@@ -204,7 +209,11 @@ const addSkill = async (studentId, name, category) => {
     return stats;
   }
 
-  stats.skills.push({ name, category, level: 1, xp: 0 });
+  // Fetch skill type
+  const masterSkill = await MasterSkill.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+  const type = masterSkill ? masterSkill.type : 'TECHNOLOGY';
+
+  stats.skills.push({ name, category, tier: 'UNVERIFIED', type });
   await stats.save();
 
   // Check badges for skills
@@ -213,36 +222,75 @@ const addSkill = async (studentId, name, category) => {
   return stats;
 };
 
+const deleteSkill = async (studentId, name) => {
+  const stats = await getOrCreateStats(studentId);
+
+  stats.skills = stats.skills.filter(
+    (s) => s.name.toLowerCase() !== name.toLowerCase()
+  );
+  await stats.save();
+
+  return stats;
+};
+
 const updateSkillXP = async (studentId, name, category, amount) => {
+  // Now a wrapper to auto-add skills without levels
+  await addSkill(studentId, name, category || 'Other');
+};
+
+const submitSkillTest = async (studentId, skillName, tier) => {
   const stats = await getOrCreateStats(studentId);
 
   let skill = stats.skills.find(
-    (s) => s.name.toLowerCase() === name.toLowerCase()
+    (s) => s.name.toLowerCase() === skillName.toLowerCase()
   );
 
   if (!skill) {
-    stats.skills.push({ name, category, level: 1, xp: amount });
+    const masterSkill = await MasterSkill.findOne({ name: { $regex: new RegExp(`^${skillName}$`, 'i') } });
+    const category = masterSkill ? masterSkill.category : 'Other';
+    const type = masterSkill ? masterSkill.type : 'TECHNOLOGY';
+    stats.skills.push({ name: skillName, category, tier, type });
     skill = stats.skills[stats.skills.length - 1];
   } else {
-    skill.xp += amount;
-  }
-
-  // Check skill level up (every 100 XP represents 1 skill level)
-  const xpNeeded = skill.level * 100;
-  if (skill.xp >= xpNeeded) {
-    skill.xp -= xpNeeded;
-    skill.level += 1;
-
-    // Send notification
-    await notificationService.createNotification(
-      studentId,
-      'LEVEL_UP',
-      `Your skill in ${skill.name} increased to Level ${skill.level}!`,
-      '/skills'
-    );
+    skill.tier = tier;
   }
 
   await stats.save();
+
+  // Determine XP reward based on tier
+  let xpReward = 150;
+  if (tier === 'INTERMEDIATE') xpReward = 300;
+  else if (tier === 'MASTER') xpReward = 500;
+
+  // Award user XP
+  const xpRes = await awardXP(studentId, xpReward, `Passed the "${skillName}" ${tier} Quiz`, true);
+
+  // Send notification
+  await notificationService.createNotification(
+    studentId,
+    'MILESTONE_VERIFIED',
+    `Congratulations! You unlocked the "${skillName}" ${tier} tier! (+${xpReward} XP)`,
+    '/skills'
+  );
+
+  // Recheck skills count badges
+  await checkAndAwardBadges(studentId, 'SKILL_COUNT', stats.skills.length);
+
+  // Check FRONTEND_SKILLS and BACKEND_SKILLS badges
+  const frontendCount = stats.skills.filter(
+    (s) => s.category.toLowerCase() === 'frontend' && s.tier !== 'UNVERIFIED'
+  ).length;
+  const backendCount = stats.skills.filter(
+    (s) => s.category.toLowerCase() === 'backend' && s.tier !== 'UNVERIFIED'
+  ).length;
+
+  await checkAndAwardBadges(studentId, 'FRONTEND_SKILLS', frontendCount);
+  await checkAndAwardBadges(studentId, 'BACKEND_SKILLS', backendCount);
+
+  return {
+    stats: xpRes,
+    xpReward,
+  };
 };
 
 module.exports = {
@@ -250,7 +298,9 @@ module.exports = {
   updateStreak,
   checkAndAwardBadges,
   addSkill,
+  deleteSkill,
   updateSkillXP,
+  submitSkillTest,
   getCumulativeXP,
   xpForLevelUp,
   MAX_LEVEL,

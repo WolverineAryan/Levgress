@@ -1,6 +1,7 @@
 const Groq = require('groq-sdk');
 const config = require('../config/env');
 const logger = require('../utils/logger');
+const { AppError } = require('../utils/AppError');
 
 // Initialize Groq client
 let groqClient = null;
@@ -17,8 +18,8 @@ if (config.groqApiKey) {
 
 const evaluateEvidence = async (projectDetails, milestoneDetails, evidence) => {
   if (!groqClient) {
-    logger.warn('Groq client not available, returning mock evaluation');
-    return getMockEvaluation(milestoneDetails, evidence);
+    logger.error('Groq client not available, throwing error.');
+    throw new AppError('Our server is busy, try again later', 503);
   }
 
   try {
@@ -39,6 +40,9 @@ const evaluateEvidence = async (projectDetails, milestoneDetails, evidence) => {
       Submitted Explanation/Text: ${evidence.text || 'No description provided.'}
       Evidence URL/Link: ${evidence.url || 'No URL/Link provided.'}
       Uploaded Filename: ${evidence.fileName || 'No file uploaded.'}
+      ${evidence.files && evidence.files.length > 0 
+        ? `Uploaded Files:\n${evidence.files.map((f, idx) => ` - File ${idx + 1}: ${f.fileName} (Stored URL: ${f.fileData})`).join('\n')}` 
+        : ''}
       
       [EVALUATION RULES]
       1. Rate the completion of the milestone on a scale from 0 to 100.
@@ -95,22 +99,10 @@ const evaluateEvidence = async (projectDetails, milestoneDetails, evidence) => {
     };
   } catch (error) {
     logger.error('Failed to get evaluation from Groq API:', error);
-    // Graceful fallback to mock evaluation
-    return getMockEvaluation(milestoneDetails, evidence);
+    throw new AppError('Our server is busy, try again later', 503);
   }
 };
 
-const getMockEvaluation = (milestoneDetails, evidence) => {
-  const isMockPass = true; // Let's make it pass by default so local dev is easy without API key
-  const score = isMockPass ? 85 : 45;
-  const feedback = `[MOCK MODE] This is a mock evaluation because GROQ_API_KEY is not set or failed. 
-Your submission of type "${evidence.type || 'TEXT'}" for "${milestoneDetails.title}" looks good. 
-${evidence.fileName ? `Uploaded file: "${evidence.fileName}" was received and validated.` : ''}
-${evidence.url ? `URL link: "${evidence.url}" was checked.` : ''}
-For improvements, remember to keep code modular, add comprehensive unit tests, and properly document key components.`;
-
-  return { score, feedback };
-};
 
 module.exports = {
   evaluateEvidence,
