@@ -49,6 +49,9 @@ app.get('/', (req, res) => {
   res.status(200).json({ status: 'success', message: 'Levgress API is running' });
 });
 
+// Ignore favicon requests
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Mount API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
