@@ -93,8 +93,8 @@ const firebaseLogin = async (idToken, chosenRole) => {
     try {
       const decodedToken = await firebaseAdmin.admin.auth().verifyIdToken(idToken);
       uid = decodedToken.uid;
-      email = decodedToken.email;
-      name = decodedToken.name || email.split('@')[0];
+      email = decodedToken.email || `${uid}@github.levgress.com`;
+      name = decodedToken.name || (decodedToken.email ? decodedToken.email.split('@')[0] : 'GitHub User');
       avatar = decodedToken.picture || '';
     } catch (error) {
       throw new AuthError('Invalid Firebase Auth ID Token: ' + error.message);
@@ -106,10 +106,28 @@ const firebaseLogin = async (idToken, chosenRole) => {
     }
     // Local developer mock mode
     console.log('Firebase SDK not initialized. Processing in Mock Auth mode.');
-    email = idToken.includes('@') ? idToken : 'mockstudent@levgress.com';
-    uid = `mock_uid_${email.replace(/[^a-zA-Z0-9]/g, '')}`;
-    name = email.split('@')[0];
-    avatar = '';
+    
+    let decodedMock = null;
+    if (idToken && idToken.includes('.') && !idToken.includes('@')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        decodedMock = jwt.decode(idToken);
+      } catch (err) {
+        console.error('Failed to decode mock Firebase JWT:', err);
+      }
+    }
+
+    if (decodedMock && decodedMock.email) {
+      email = decodedMock.email;
+      uid = decodedMock.user_id || decodedMock.sub || `mock_uid_${email.replace(/[^a-zA-Z0-9]/g, '')}`;
+      name = decodedMock.name || email.split('@')[0];
+      avatar = decodedMock.picture || '';
+    } else {
+      email = idToken.includes('@') ? idToken : 'mockstudent@levgress.com';
+      uid = `mock_uid_${email.replace(/[^a-zA-Z0-9]/g, '')}`;
+      name = email.split('@')[0];
+      avatar = '';
+    }
   }
 
   // Find user by firebaseUid or email (to link previous accounts)

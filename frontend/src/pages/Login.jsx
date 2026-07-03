@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui';
-import { Trophy, Flame, BarChart3, GraduationCap, ArrowRight, Mail } from 'lucide-react';
+import { Trophy, Flame, BarChart3, GraduationCap } from 'lucide-react';
 
 export const Login = () => {
-  const { user, loginWithProvider, login } = useAuth();
+  const { user, loginWithProvider } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,11 +23,6 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Email form state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showEmailForm, setShowEmailForm] = useState(false);
-
   const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
@@ -35,42 +30,6 @@ export const Login = () => {
       await loginWithProvider('google', 'STUDENT');
     } catch (err) {
       setError(err.message || 'Google sign-in failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGithubSignIn = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await loginWithProvider('github', 'STUDENT');
-    } catch (err) {
-      setError(err.message || 'GitHub sign-in failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEmailSubmit = async (e) => {
-    e.preventDefault();
-    if (!showEmailForm) {
-      if (!email.trim() || !email.includes('@')) {
-        setError('Please enter a valid email address.');
-        return;
-      }
-      setError('');
-      setShowEmailForm(true);
-      return;
-    }
-
-    setError('');
-    setLoading(true);
-    try {
-      await login(email, password);
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -91,8 +50,8 @@ export const Login = () => {
           backgroundPosition: 'center'
         }}
       >
-        {/* Glass overlay for content legibility */}
-        <div className="absolute inset-0 bg-bg-secondary/40 backdrop-blur-[1px] z-0" />
+        {/* Subtle dark overlay for content legibility without washing out colors */}
+        <div className="absolute inset-0 bg-black/15 z-0" />
 
         <div className="flex items-center gap-2 relative z-10">
           <img src="/logo.png" alt="Levgress Mascot" className="w-7 h-7 object-contain" />
@@ -106,10 +65,10 @@ export const Login = () => {
             <GraduationCap className="w-3.5 h-3.5" />
             Secure Student & Staff Access
           </div>
-          <h2 className="text-4xl font-extrabold tracking-tight leading-[1.15] text-text-primary">
+          <h2 className="text-4xl font-extrabold tracking-tight leading-[1.15] text-text-primary drop-shadow-md">
             Unlock Your <span className="text-accent-primary">Potential</span> with Gamified Monitoring
           </h2>
-          <p className="text-text-secondary leading-relaxed text-xs max-w-sm">
+          <p className="text-text-secondary leading-relaxed text-xs max-w-sm drop-shadow-sm">
             Track milestones, earn experience points, unlock badges, and receive real-time AI feedback on your engineering projects.
           </p>
         </div>
@@ -144,20 +103,108 @@ export const Login = () => {
       </div>
 
       {/* Right Column: Sign In Portal */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative z-10">
-        {/* Animated Geometrical Shapes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-40">
-          <div className="absolute top-[10%] left-[20%] w-24 h-24 border border-accent-primary/20 rounded-full animate-float" style={{ animationDuration: '8s' }} />
-          <div className="absolute bottom-[15%] right-[25%] w-36 h-36 border border-accent-primary/15 rotate-45 animate-float" style={{ animationDuration: '12s', animationDelay: '2s' }} />
-          <div className="absolute top-[60%] left-[10%] w-16 h-16 border-2 border-dashed border-accent-primary/10 rounded-lg animate-spin" style={{ animationDuration: '20s' }} />
-          <div className="absolute top-[30%] right-[15%] w-20 h-20 bg-accent-primary/5 rounded-xl animate-float" style={{ animationDuration: '10s', animationDelay: '1s' }} />
-          <div className="absolute bottom-[40%] left-[30%] w-8 h-8 bg-accent-hover/5 rounded-full animate-pulse" />
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative z-10 bg-bg-secondary/10">
+        
+        {/* Style injection for rich custom animations */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes float-slow {
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+            50% { transform: translateY(-20px) translateX(12px) rotate(6deg); }
+          }
+          @keyframes float-reverse {
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+            50% { transform: translateY(15px) translateX(-12px) rotate(-8deg); }
+          }
+          @keyframes draw-path {
+            0% { stroke-dashoffset: 1000; }
+            100% { stroke-dashoffset: 0; }
+          }
+          @keyframes morph-orb {
+            0%, 100% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; }
+            50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; }
+          }
+          @keyframes spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .animate-float-slow {
+            animation: float-slow 10s ease-in-out infinite;
+          }
+          .animate-float-reverse {
+            animation: float-reverse 13s ease-in-out infinite;
+          }
+          .animate-draw {
+            stroke-dasharray: 1000;
+            animation: draw-path 45s linear infinite;
+          }
+          .animate-morph {
+            animation: morph-orb 15s ease-in-out infinite;
+          }
+          .animate-spin-slow {
+            animation: spin-slow 25s linear infinite;
+          }
+        `}} />
+
+        {/* Abstract Geometrical Graphics & Animations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           
-          {/* Subtle grid pattern overlay */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(192,133,82,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(192,133,82,0.03)_1px,transparent_1px)] bg-[size:24px_24px]" />
+          {/* Animated Morphing Ambient Orbs */}
+          <div className="absolute top-[10%] right-[-10%] w-[350px] h-[350px] bg-accent-primary/10 dark:bg-accent-primary/5 blur-3xl rounded-full animate-morph" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-accent-hover/8 dark:bg-accent-hover/4 blur-3xl rounded-full animate-morph" style={{ animationDelay: '-5s' }} />
+
+          {/* Circular Outlines */}
+          <div className="absolute top-[20%] left-[10%] w-32 h-32 border border-accent-primary/15 rounded-full animate-float-slow" />
+          <div className="absolute bottom-[20%] right-[10%] w-48 h-48 border border-accent-primary/10 rounded-full animate-float-reverse" />
+          
+          {/* Concentric spinning rings */}
+          <div className="absolute top-[45%] right-[15%] w-40 h-40 border border-dashed border-accent-primary/10 rounded-full animate-spin-slow" />
+          <div className="absolute top-[47%] right-[17%] w-32 h-32 border border-dotted border-accent-primary/15 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '35s' }} />
+
+          {/* Diagonal hatch pattern circle */}
+          <div 
+            className="absolute top-[35%] left-[-5%] w-28 h-28 rounded-full opacity-[0.08] dark:opacity-[0.04] animate-float-slow"
+            style={{ 
+              backgroundImage: 'repeating-linear-gradient(45deg, var(--color-accent-primary) 0px, var(--color-accent-primary) 1px, transparent 0px, transparent 10px)',
+              animationDelay: '-2s'
+            }} 
+          />
+
+          {/* Floating Coding Glyphs */}
+          <div className="absolute top-[15%] right-[20%] text-[13px] font-black font-mono text-accent-primary/20 dark:text-accent-primary/10 select-none animate-float-slow">
+            &lt;code /&gt;
+          </div>
+          <div className="absolute bottom-[25%] left-[18%] text-[15px] font-black font-mono text-accent-primary/25 dark:text-accent-primary/12 select-none animate-float-reverse">
+            &#123; stats &#125;
+          </div>
+          <div className="absolute top-[48%] left-[8%] text-xs font-black font-mono text-accent-primary/15 dark:text-accent-primary/8 select-none animate-float-slow" style={{ animationDelay: '-3s' }}>
+            git commit
+          </div>
+          <div className="absolute bottom-[10%] right-[25%] text-lg font-black font-mono text-accent-primary/20 dark:text-accent-primary/10 select-none animate-float-reverse">
+            ++XP
+          </div>
+
+          {/* Dots Grids */}
+          <div className="absolute top-[10%] right-[8%] w-16 h-16 opacity-25 dark:opacity-10 grid grid-cols-4 gap-2">
+            {[...Array(16)].map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+            ))}
+          </div>
+          <div className="absolute bottom-[12%] left-[8%] w-16 h-16 opacity-25 dark:opacity-10 grid grid-cols-4 gap-2">
+            {[...Array(16)].map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+            ))}
+          </div>
+
+          {/* Abstract wavy contours with path drawing animation */}
+          <svg className="absolute right-[-10%] top-[-10%] w-[60%] h-[60%] text-accent-primary/8 dark:text-accent-primary/3 shrink-0" viewBox="0 0 200 200" fill="none">
+            <path d="M50 0C80 20 120 10 150 40C180 70 190 120 170 160C150 200 100 190 60 170C20 150 10 100 0 60C-10 20 20 -20 50 0Z" stroke="currentColor" strokeWidth="1" strokeDasharray="5 5" className="animate-draw" />
+          </svg>
+          <svg className="absolute left-[-15%] bottom-[-15%] w-[70%] h-[70%] text-accent-primary/6 dark:text-accent-primary/2 shrink-0" viewBox="0 0 200 200" fill="none">
+            <path d="M40 20C70 -10 110 0 140 20C170 40 180 90 160 130C140 170 90 180 50 160C10 140 0 90 10 50C20 10 10 50 40 20Z" stroke="currentColor" strokeWidth="1.5" className="animate-draw" style={{ animationDirection: 'reverse', animationDuration: '60s' }} />
+          </svg>
         </div>
 
-        <form onSubmit={handleEmailSubmit} className="w-full max-w-[420px] flex flex-col space-y-7 bg-bg-card p-10 rounded-[32px] border border-border-subtle shadow-2xl relative z-10">
+        <div className="w-full max-w-[420px] flex flex-col space-y-7 bg-bg-card p-10 rounded-[32px] border border-border-subtle shadow-2xl relative z-10">
           <div>
             <div className="w-12 h-12 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center mx-auto mb-3 shadow-sm border border-accent-primary/20">
               <GraduationCap className="w-5.5 h-5.5" />
@@ -192,78 +239,19 @@ export const Login = () => {
               </svg>
               <span>Sign in with Google</span>
             </Button>
-
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleGithubSignIn}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 border border-border-subtle bg-bg-primary hover:bg-bg-secondary transition-all py-3 rounded-2xl text-xs font-bold text-text-primary shadow-sm hover:shadow-md cursor-pointer"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-              </svg>
-              <span>Sign in with GitHub</span>
-            </Button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-border-subtle" />
-            <span className="text-[10px] font-extrabold text-text-muted tracking-wider uppercase">OR</span>
-            <div className="h-px flex-1 bg-border-subtle" />
-          </div>
-
-          <div className="flex flex-col space-y-3">
-            <div className="flex items-center bg-bg-primary border border-border-subtle rounded-2xl px-4 py-3 focus-within:border-accent-primary transition-all">
-              <Mail className="w-4 h-4 text-text-muted shrink-0 mr-3" />
-              <input
-                type="email"
-                placeholder="Enter your registered email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className="w-full bg-transparent text-xs text-text-primary outline-none"
-                required
-              />
-            </div>
-
-            {showEmailForm && (
-              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="flex items-center bg-bg-primary border border-border-subtle rounded-2xl px-4 py-3 focus-within:border-accent-primary transition-all">
-                  <input
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    className="w-full bg-transparent text-xs text-text-primary outline-none"
-                    required
-                  />
-                </div>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              loading={loading}
-              className="w-full bg-accent-primary hover:bg-accent-hover text-bg-primary font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-accent-primary/10 transition-all"
-            >
-              <span>{showEmailForm ? 'Sign In' : 'Continue with Email'}</span>
-              <ArrowRight className="w-4 h-4 shrink-0" />
-            </Button>
-          </div>
-
-          <div className="text-center text-[10px] text-text-muted leading-relaxed">
+          <div className="text-center text-[10px] text-text-muted leading-relaxed pt-2 border-t border-border-subtle">
             Note: Instructor accounts must be manually provisioned by the administrator. Student accounts can be self-registered.
           </div>
 
-          <p className="text-center text-xs text-text-secondary pt-2 border-t border-border-subtle">
+          <p className="text-center text-xs text-text-secondary">
             Don't have an account?{' '}
             <Link to="/signup" className="text-accent-primary font-semibold hover:underline">
               Create student account
             </Link>
           </p>
-        </form>
+        </div>
       </div>
     </div>
   );

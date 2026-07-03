@@ -32,7 +32,50 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
+    let idToken;
+    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+
+    if (apiKey && apiKey !== 'mock-api-key') {
+      try {
+        const { signInWithEmailAndPassword } = await import('firebase/auth');
+        const { auth } = await import('../config/firebase');
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        idToken = await result.user.getIdToken();
+      } catch (err) {
+        console.error('Firebase Email Login failed:', err);
+        let userMessage = 'Firebase email login failed.';
+        if (err.code) {
+          switch (err.code) {
+            case 'auth/user-not-found':
+              userMessage = 'No account found with this email. Please register.';
+              break;
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential':
+              userMessage = 'Incorrect email or password.';
+              break;
+            case 'auth/invalid-email':
+              userMessage = 'Invalid email address format.';
+              break;
+            case 'auth/user-disabled':
+              userMessage = 'This account has been disabled.';
+              break;
+            default:
+              userMessage = err.message || userMessage;
+          }
+        } else {
+          userMessage = err.message || userMessage;
+        }
+        throw new Error(userMessage);
+      }
+    } else {
+      if (import.meta.env.PROD) {
+        throw new Error('Authentication system is not configured. Please contact the administrator.');
+      }
+      // Developer Mock Mode
+      idToken = email;
+    }
+
+    const res = await api.post('/auth/firebase-login', { idToken });
     const { token, user: loggedUser } = res.data.data;
 
     localStorage.setItem('token', token);
@@ -41,8 +84,55 @@ export const AuthProvider = ({ children }) => {
     return loggedUser;
   };
 
-  const register = async (name, email, password, role) => {
-    const res = await api.post('/auth/register', { name, email, password, role });
+  const register = async (name, email, password, role = 'STUDENT') => {
+    let idToken;
+    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+
+    if (apiKey && apiKey !== 'mock-api-key') {
+      try {
+        const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+        const { auth } = await import('../config/firebase');
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        
+        try {
+          await updateProfile(result.user, { displayName: name });
+        } catch (profileErr) {
+          console.warn('Failed to update Firebase profile display name:', profileErr);
+        }
+        
+        // Force token refresh to include the updated displayName
+        idToken = await result.user.getIdToken(true);
+      } catch (err) {
+        console.error('Firebase Email Register failed:', err);
+        let userMessage = 'Firebase email registration failed.';
+        if (err.code) {
+          switch (err.code) {
+            case 'auth/email-already-in-use':
+              userMessage = 'This email is already registered. Please sign in.';
+              break;
+            case 'auth/weak-password':
+              userMessage = 'Password is too weak. Please use at least 6 characters.';
+              break;
+            case 'auth/invalid-email':
+              userMessage = 'Invalid email address format.';
+              break;
+            default:
+              userMessage = err.message || userMessage;
+          }
+        } else {
+          userMessage = err.message || userMessage;
+        }
+        throw new Error(userMessage);
+      }
+    } else {
+      if (import.meta.env.PROD) {
+        throw new Error('Authentication system is not configured. Please contact the administrator.');
+      }
+      // Developer Mock Mode
+      idToken = email;
+    }
+
+    const res = await api.post('/auth/firebase-login', { idToken, role });
     const { token, user: registeredUser } = res.data.data;
 
     localStorage.setItem('token', token);
