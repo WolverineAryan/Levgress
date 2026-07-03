@@ -41,7 +41,7 @@ export const Settings = () => {
   // Preference fields state
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [aiAlerts, setAiAlerts] = useState(true);
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [prefLoading, setPrefLoading] = useState(false);
   const [prefSuccess, setPrefSuccess] = useState('');
 
