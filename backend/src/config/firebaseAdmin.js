@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const { credential } = require('firebase-admin');
+const { cert } = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
@@ -11,7 +11,7 @@ try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     admin.initializeApp({
-      credential: credential.cert(serviceAccount),
+      credential: cert(serviceAccount),
     });
     initialized = true;
     logger.info('Firebase Admin SDK initialized successfully from environment string');
@@ -21,7 +21,7 @@ try {
     if (fs.existsSync(serviceAccountPath)) {
       const serviceAccount = require(serviceAccountPath);
       admin.initializeApp({
-        credential: credential.cert(serviceAccount),
+        credential: cert(serviceAccount),
       });
       initialized = true;
       logger.info('Firebase Admin SDK initialized successfully from serviceAccountKey.json');
