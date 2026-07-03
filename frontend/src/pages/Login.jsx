@@ -58,14 +58,24 @@ export const Login = () => {
       <div className="ambient-glow -bottom-20 -right-20" />
 
       {/* Left Column: Branding / Aesthetics */}
-      <div className="hidden lg:flex lg:w-1/2 bg-bg-secondary border-r border-border-subtle flex-col justify-between p-16 relative z-10">
-        <div className="flex items-center gap-2">
+      <div 
+        className="hidden lg:flex lg:w-1/2 border-r border-border-subtle flex-col justify-between p-16 relative z-10 overflow-hidden"
+        style={{
+          backgroundImage: 'url(/auth-bg-1.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        {/* Glass overlay for content legibility */}
+        <div className="absolute inset-0 bg-bg-secondary/40 backdrop-blur-[1px] z-0" />
+
+        <div className="flex items-center gap-2 relative z-10">
           <span className="text-xl font-black tracking-wider bg-gradient-to-r from-accent-primary to-accent-hover bg-clip-text text-transparent">
             LEVGRESS
           </span>
         </div>
 
-        <div className="max-w-md flex flex-col space-y-4">
+        <div className="max-w-md flex flex-col space-y-4 relative z-10">
           <div className="inline-flex items-center gap-1.5 bg-accent-primary/10 text-accent-primary px-3 py-1 rounded-full text-xs font-bold w-fit border border-accent-primary/20">
             Secure Developer Access
           </div>
@@ -77,14 +87,26 @@ export const Login = () => {
           </p>
         </div>
 
-        <div className="text-xs text-text-muted">
+        <div className="text-xs text-text-muted relative z-10">
           © {new Date().getFullYear()} Levgress. All rights reserved.
         </div>
       </div>
 
       {/* Right Column: Sign In Portal */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative z-10">
-        <div className="w-full max-w-sm flex flex-col space-y-7 bg-bg-card/40 p-8 rounded-2xl border border-border-subtle backdrop-blur-sm shadow-xl">
+        {/* Animated Geometrical Shapes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-40">
+          <div className="absolute top-[10%] left-[20%] w-24 h-24 border border-accent-primary/20 rounded-full animate-float" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-[15%] right-[25%] w-36 h-36 border border-accent-primary/15 rotate-45 animate-float" style={{ animationDuration: '12s', animationDelay: '2s' }} />
+          <div className="absolute top-[60%] left-[10%] w-16 h-16 border-2 border-dashed border-accent-primary/10 rounded-lg animate-spin" style={{ animationDuration: '20s' }} />
+          <div className="absolute top-[30%] right-[15%] w-20 h-20 bg-accent-primary/5 rounded-xl animate-float" style={{ animationDuration: '10s', animationDelay: '1s' }} />
+          <div className="absolute bottom-[40%] left-[30%] w-8 h-8 bg-accent-hover/5 rounded-full animate-pulse" />
+          
+          {/* Subtle grid pattern overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(192,133,82,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(192,133,82,0.03)_1px,transparent_1px)] bg-[size:24px_24px]" />
+        </div>
+
+        <div className="w-full max-w-sm flex flex-col space-y-7 bg-bg-card/40 p-8 rounded-2xl border border-border-subtle backdrop-blur-sm shadow-xl relative z-10">
           <div className="flex flex-col space-y-2">
             <h1 className="text-2xl font-bold tracking-tight text-text-primary">Sign In</h1>
             <p className="text-xs text-text-secondary">Access the Student or Instructor dashboard using single sign-on.</p>
