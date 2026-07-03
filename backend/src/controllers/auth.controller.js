@@ -60,22 +60,6 @@ const updatePassword = asyncHandler(async (req, res) => {
   });
 });
 
-const toggle2FA = asyncHandler(async (req, res) => {
-  const result = await authService.toggle2FA(req.user._id);
-  res.status(200).json({
-    status: 'success',
-    data: result,
-  });
-});
-
-const verify2FA = asyncHandler(async (req, res) => {
-  const { token } = req.body;
-  const result = await authService.verify2FA(req.user._id, token);
-  res.status(200).json({
-    status: 'success',
-    data: result,
-  });
-});
 
 const deleteAccount = asyncHandler(async (req, res) => {
   const result = await authService.deleteAccount(req.user._id);
@@ -103,8 +87,6 @@ module.exports = {
   updateProfile,
   checkUsername,
   updatePassword,
-  toggle2FA,
-  verify2FA,
   deleteAccount,
   reportIssue,
 };

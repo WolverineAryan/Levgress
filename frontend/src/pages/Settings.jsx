@@ -36,14 +36,7 @@ export const Settings = () => {
   const [pwError, setPwError] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
 
-  // 2FA State
-  const [is2FAEnabled, setIs2FAEnabled] = useState(user?.twoFactorEnabled || false);
-  const [tfaLoading, setTfaLoading] = useState(false);
-  const [tfaSuccess, setTfaSuccess] = useState('');
-  const [tfaError, setTfaError] = useState('');
-  const [show2FAModal, setShow2FAModal] = useState(false);
-  const [tfaSecret, setTfaSecret] = useState('');
-  const [tfaQrCodeUrl, setTfaQrCodeUrl] = useState('');
+
 
   // Preference fields state
   const [emailAlerts, setEmailAlerts] = useState(true);
@@ -123,38 +116,7 @@ export const Settings = () => {
     }
   };
 
-  // Handle Toggle 2FA
-  const handleToggle2FA = async () => {
-    setTfaLoading(true);
-    setTfaSuccess('');
-    setTfaError('');
-    try {
-      const res = await authApi.toggle2FA();
-      const nextState = res.data.data.user.twoFactorEnabled;
-      setIs2FAEnabled(nextState);
-      updateLocalUser(res.data.data.user);
-      
-      if (nextState) {
-        const secret = res.data.data.secret;
-        setTfaSecret(secret);
-        const otpauthUri = `otpauth://totp/Levgress:${user.email}?secret=${secret}&issuer=Levgress`;
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUri)}`;
-        setTfaQrCodeUrl(qrUrl);
-        setShow2FAModal(true);
-        setTfaSuccess('Two-Factor Authentication activated successfully!');
-      } else {
-        setTfaSuccess('Two-Factor Authentication deactivated.');
-        setTfaSecret('');
-        setTfaQrCodeUrl('');
-      }
-      setTimeout(() => setTfaSuccess(''), 4000);
-    } catch (err) {
-      console.error(err);
-      setTfaError(err.response?.data?.message || 'Failed to configure 2FA.');
-    } finally {
-      setTfaLoading(false);
-    }
-  };
+
 
   // Handle Issue Submission
   const handleReportIssue = async (e) => {
@@ -363,56 +325,7 @@ export const Settings = () => {
                 </form>
               </Card>
 
-              {/* 2FA Form */}
-              <Card className="p-6 space-y-4 bg-bg-card/30 backdrop-blur-sm border border-border-subtle shadow-xl">
-                <div>
-                  <h2 className="text-sm font-extrabold text-text-primary">Two-Factor Authentication (2FA)</h2>
-                  <p className="text-[11px] text-text-secondary mt-1">Add mobile validation verification to prevent credential hijacking.</p>
-                </div>
 
-                {tfaSuccess && (
-                  <div className="p-3 text-[10px] bg-status-success/10 border border-status-success/20 text-status-success rounded-xl flex items-center gap-2 animate-fade-in font-bold">
-                    <Check size={12} /> {tfaSuccess}
-                  </div>
-                )}
-
-                {tfaError && (
-                  <div className="p-3 text-[10px] bg-status-danger/10 border border-status-danger/20 text-status-danger rounded-xl flex items-center gap-2 animate-fade-in font-bold">
-                    {tfaError}
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <p className="text-[11px] text-text-secondary leading-relaxed">
-                    When active, signing in will request a validation code from your mobile authenticator app in addition to Google/GitHub authentication.
-                  </p>
-
-                  <div className="flex items-center justify-between bg-bg-secondary/20 p-4 rounded-xl border border-border-subtle/50">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-text-primary">MFA Protection</span>
-                      <span className={`text-[9px] font-bold uppercase mt-1.5 px-2 py-0.5 rounded border w-fit ${
-                        is2FAEnabled 
-                          ? 'bg-status-success/10 border-status-success/20 text-status-success' 
-                          : 'bg-text-muted/10 border-border-subtle text-text-muted'
-                      }`}>
-                        {is2FAEnabled ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    
-                    <Button
-                      onClick={handleToggle2FA}
-                      loading={tfaLoading}
-                      className={`text-xs px-4 py-2 font-black rounded-xl cursor-pointer border transition-all ${
-                        is2FAEnabled
-                          ? 'bg-bg-secondary border-border-subtle text-text-secondary hover:text-text-primary'
-                          : 'bg-accent-primary hover:bg-accent-hover text-bg-primary border-transparent shadow-md shadow-accent-primary/5'
-                      }`}
-                    >
-                      {is2FAEnabled ? 'Deactivate 2FA' : 'Activate 2FA'}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
 
             </div>
           )}
@@ -635,31 +548,7 @@ export const Settings = () => {
         </div>
       </div>
 
-      {/* 2FA Setup Confirmation Modal */}
-      {show2FAModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-bg-card border border-border-primary rounded-2xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in-95 duration-200 shadow-2xl">
-            <h3 className="text-sm font-black text-text-primary tracking-tight mb-2 uppercase flex items-center gap-2">
-              <ShieldAlert className="text-amber-500 w-4 h-4" /> Authenticator Setup
-            </h3>
-            <p className="text-[11px] text-text-secondary leading-normal mb-5">
-              Two-Factor authentication is active. Scan the QR code with Google Authenticator or copy the secret key.
-            </p>
 
-            <div className="flex flex-col items-center p-4 bg-white rounded-xl mb-4 border border-border-subtle">
-              <img src={tfaQrCodeUrl} alt="2FA QR Code" className="w-48 h-48 object-contain" />
-              <span className="text-[9px] text-black font-extrabold uppercase mt-3 select-all">Secret: {tfaSecret}</span>
-            </div>
-
-            <Button
-              onClick={() => setShow2FAModal(false)}
-              className="w-full text-xs py-2.5 bg-accent-primary hover:bg-accent-hover text-bg-primary font-bold rounded-xl cursor-pointer"
-            >
-              Done / Verification Complete
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Account Deletion Confirmation Modal */}
       {showDeleteConfirm && (

@@ -12,8 +12,7 @@ router.put('/onboard', protect, authController.onboard);
 router.put('/update-profile', protect, authController.updateProfile);
 router.get('/check-username/:username', protect, authController.checkUsername);
 router.put('/update-password', protect, authController.updatePassword);
-router.post('/toggle-2fa', protect, authController.toggle2FA);
-router.post('/verify-2fa', protect, authController.verify2FA);
+
 router.delete('/delete-account', protect, authController.deleteAccount);
 router.post('/report-issue', protect, authController.reportIssue);
 

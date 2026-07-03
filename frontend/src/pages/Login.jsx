@@ -5,7 +5,7 @@ import { Button } from '../components/ui';
 import { ShieldAlert } from 'lucide-react';
 
 export const Login = () => {
-  const { user, loginWithProvider, complete2FA } = useAuth();
+  const { user, loginWithProvider } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,22 +23,13 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 2FA verification states
-  const [showTfaVerification, setShowTfaVerification] = useState(false);
-  const [tfaUser, setTfaUser] = useState(null);
-  const [tfaCode, setTfaCode] = useState('');
-  const [tfaError, setTfaError] = useState('');
-  const [tfaLoading, setTfaLoading] = useState(false);
+
 
   const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
     try {
-      const res = await loginWithProvider('google', 'STUDENT');
-      if (res && res.twoFactorRequired) {
-        setTfaUser(res);
-        setShowTfaVerification(true);
-      }
+      await loginWithProvider('google', 'STUDENT');
     } catch (err) {
       setError(err.message || 'Google sign-in failed.');
     } finally {
@@ -50,11 +41,7 @@ export const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const res = await loginWithProvider('github', 'STUDENT');
-      if (res && res.twoFactorRequired) {
-        setTfaUser(res);
-        setShowTfaVerification(true);
-      }
+      await loginWithProvider('github', 'STUDENT');
     } catch (err) {
       setError(err.message || 'GitHub sign-in failed.');
     } finally {
@@ -62,25 +49,7 @@ export const Login = () => {
     }
   };
 
-  const handleVerify2FACode = async (e) => {
-    e.preventDefault();
-    if (tfaCode.length !== 6) {
-      setTfaError('Authentication code must be 6 digits.');
-      return;
-    }
 
-    setTfaLoading(true);
-    setTfaError('');
-
-    try {
-      await complete2FA(tfaCode);
-    } catch (err) {
-      console.error(err);
-      setTfaError(err.response?.data?.message || 'Invalid authenticator code. Please try again.');
-    } finally {
-      setTfaLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-bg-primary flex items-stretch relative overflow-hidden select-none">
@@ -182,65 +151,7 @@ export const Login = () => {
             </Link>
           </p>
         </div>
-        {/* Two-Factor Authentication Verification Modal */}
-        {showTfaVerification && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-bg-card border border-border-primary rounded-2xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in-95 duration-200 shadow-2xl space-y-4">
-              <div className="flex flex-col space-y-1">
-                <h3 className="text-sm font-black text-text-primary tracking-tight uppercase flex items-center gap-2">
-                  <ShieldAlert className="text-accent-primary w-4.5 h-4.5" /> Two-Factor Verification
-                </h3>
-                <p className="text-[11px] text-text-secondary leading-normal">
-                  Please enter the 6-digit verification code from your mobile authenticator application to log in.
-                </p>
-              </div>
 
-              {tfaError && (
-                <div className="p-3 text-[10px] bg-status-danger/10 border border-status-danger/25 text-status-danger rounded-xl font-bold animate-fade-in">
-                  {tfaError}
-                </div>
-              )}
-
-              <form onSubmit={handleVerify2FACode} className="space-y-4">
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase">Authenticator Code</label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    placeholder="000000"
-                    value={tfaCode}
-                    onChange={(e) => setTfaCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full bg-bg-secondary border border-border-subtle focus:border-accent-primary rounded-xl px-4 py-2.5 text-center text-lg font-black tracking-widest text-text-primary outline-none transition-all"
-                    required
-                  />
-                </div>
-
-                <div className="flex gap-3 justify-end pt-2">
-                  <Button
-                    onClick={() => {
-                      setShowTfaVerification(false);
-                      setTfaCode('');
-                      setTfaError('');
-                      localStorage.removeItem('token');
-                    }}
-                    disabled={tfaLoading}
-                    variant="ghost"
-                    className="text-xs px-4 py-2 font-bold rounded-xl cursor-pointer"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    loading={tfaLoading}
-                    className="text-xs px-4 py-2 bg-accent-primary hover:bg-accent-hover text-bg-primary rounded-xl font-bold cursor-pointer transition-all shadow-md shadow-accent-primary/5"
-                  >
-                    Verify Code
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

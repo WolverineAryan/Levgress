@@ -113,16 +113,7 @@ export const AuthProvider = ({ children }) => {
 
     const res = await api.post('/auth/firebase-login', { idToken, role });
 
-    if (res.data.data.twoFactorRequired) {
-      // Store the temporary token so that verify-2fa request has auth headers
-      localStorage.setItem('token', res.data.data.tempToken);
-      return {
-        twoFactorRequired: true,
-        tempToken: res.data.data.tempToken,
-        userId: res.data.data.userId,
-        email: res.data.data.email
-      };
-    }
+
 
     const { token, user: loggedUser } = res.data.data;
 
@@ -132,25 +123,12 @@ export const AuthProvider = ({ children }) => {
     return loggedUser;
   };
 
-  const complete2FA = async (totpToken) => {
-    try {
-      const res = await api.post('/auth/verify-2fa', { token: totpToken });
-      const { token, user: loggedUser } = res.data.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(loggedUser));
-      setUser(loggedUser);
-      return loggedUser;
-    } catch (err) {
-      localStorage.removeItem('token');
-      throw err;
-    }
-  };
+
 
   const loginWithGoogle = (role) => loginWithProvider('google', role);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateLocalUser, loginWithGoogle, loginWithProvider, complete2FA }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateLocalUser, loginWithGoogle, loginWithProvider }}>
       {children}
     </AuthContext.Provider>
   );

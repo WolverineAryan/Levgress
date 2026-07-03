@@ -152,15 +152,6 @@ const firebaseLogin = async (idToken, chosenRole) => {
     }
   }
 
-  // Check if Two-Factor Authentication is enabled
-  if (user.twoFactorEnabled) {
-    return {
-      twoFactorRequired: true,
-      tempToken: generateToken(user._id),
-      userId: user._id,
-      email: user.email,
-    };
-  }
 
   // Generate Token
   const token = generateToken(user._id);
@@ -407,59 +398,7 @@ const updatePassword = async (userId, currentPassword, newPassword) => {
   return userResponse;
 };
 
-const toggle2FA = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ValidationError('User not found');
-  }
 
-  user.twoFactorEnabled = !user.twoFactorEnabled;
-
-  // If enabling, generate a unique base32 secret key if they don't have one
-  if (user.twoFactorEnabled && !user.twoFactorSecret) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    let secret = '';
-    for (let i = 0; i < 16; i++) {
-      secret += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    user.twoFactorSecret = secret;
-  }
-
-  await user.save();
-
-  const userResponse = user.toObject();
-  delete userResponse.passwordHash;
-
-  // Return the secret key only when turning it on so they can scan/add it
-  return {
-    user: userResponse,
-    secret: user.twoFactorSecret,
-  };
-};
-
-const verify2FA = async (userId, totpToken) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ValidationError('User not found');
-  }
-
-  const { verifyTOTP } = require('../utils/totp');
-  const isValid = verifyTOTP(totpToken, user.twoFactorSecret);
-  if (!isValid) {
-    throw new ValidationError('Invalid 6-digit authenticator code');
-  }
-
-  // Issue real authentication credentials
-  const token = generateToken(user._id);
-  const userResponse = user.toObject();
-  delete userResponse.passwordHash;
-  delete userResponse.twoFactorSecret;
-
-  return {
-    user: userResponse,
-    token,
-  };
-};
 
 const deleteAccount = async (userId) => {
   const user = await User.findById(userId);
@@ -510,8 +449,6 @@ module.exports = {
   onboardUser,
   updateUserProfile,
   updatePassword,
-  toggle2FA,
   deleteAccount,
   reportIssue,
-  verify2FA,
 };

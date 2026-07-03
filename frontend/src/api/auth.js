@@ -24,13 +24,6 @@ export const updatePassword = (passwords) => {
   return api.put('/auth/update-password', passwords);
 };
 
-export const toggle2FA = () => {
-  return api.post('/auth/toggle-2fa');
-};
-
-export const verify2FA = (token) => {
-  return api.post('/auth/verify-2fa', { token });
-};
 
 export const deleteAccount = () => {
   return api.delete('/auth/delete-account');
