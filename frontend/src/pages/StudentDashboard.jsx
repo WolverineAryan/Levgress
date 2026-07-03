@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import * as studentsApi from '../api/students';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, LevelRing, ProgressBar, Badge } from '../components/ui';
 import { StreakHeatmap, XPAreaChart } from '../components/charts';
@@ -8,6 +9,7 @@ import { formatDateTime } from '../utils/date';
 
 export const StudentDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -107,7 +109,7 @@ export const StudentDashboard = () => {
       <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">
-            {getGreeting()}, Student!
+            {getGreeting()}, {user?.name || user?.username || 'Student'}!
           </h1>
           <p className="text-sm text-text-secondary mt-1">
             Ready to make some progress and gain some XP today?
