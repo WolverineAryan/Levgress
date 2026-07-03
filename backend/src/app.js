@@ -44,6 +44,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Sanitize inputs against NoSQL query injection
 app.use(mongoSanitize());
 
+// Health check route for Render
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'success', message: 'Levgress API is running' });
+});
+
 // Mount API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
