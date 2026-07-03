@@ -95,8 +95,9 @@ export const Navbar = () => {
 
   return (
     <nav className="h-16 border-b border-border-subtle bg-bg-secondary/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-40 select-none">
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-accent-primary to-accent-hover bg-clip-text text-transparent">
+      <div className="flex items-center gap-2.5">
+        <img src="/logo.png" alt="Levgress Mascot Logo" className="w-7 h-7 object-contain" />
+        <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-accent-primary to-accent-hover bg-clip-text text-transparent">
           LEVGRESS
         </h1>
         <span className="text-[10px] font-bold border border-border-primary/50 text-accent-primary px-1.5 py-0.5 rounded">
