@@ -5,6 +5,7 @@ const StudentStats = require('../models/StudentStats');
 const config = require('../config/env');
 const { AuthError, ValidationError } = require('../utils/AppError');
 const firebaseAdmin = require('../config/firebaseAdmin');
+const { getAuth } = require('firebase-admin/auth');
 const supabaseService = require('./supabase.service');
 
 // Helper to generate JWT Token
@@ -91,7 +92,7 @@ const firebaseLogin = async (idToken, chosenRole) => {
 
   if (firebaseAdmin.isInitialized()) {
     try {
-      const decodedToken = await firebaseAdmin.admin.auth().verifyIdToken(idToken);
+      const decodedToken = await getAuth().verifyIdToken(idToken);
       uid = decodedToken.uid;
       email = decodedToken.email || `${uid}@github.levgress.com`;
       name = decodedToken.name || (decodedToken.email ? decodedToken.email.split('@')[0] : 'GitHub User');
