@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
 
+
 let initialized = false;
 
 try {
