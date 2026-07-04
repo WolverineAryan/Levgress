@@ -15,6 +15,7 @@ import {
   Book, 
   Shield, 
   CheckCircle2,
+  XCircle,
   Sparkles,
   PartyPopper
 } from 'lucide-react';
@@ -74,17 +75,25 @@ export const Layout = () => {
     // Listen for milestone completions (via special notifications)
     const handleNotification = (notification) => {
       const msg = notification.message || '';
-      if (
-        msg.toLowerCase().includes('approved') || 
-        msg.toLowerCase().includes('completed') ||
-        msg.toLowerCase().includes('validated')
-      ) {
+      const type = notification.type || '';
+      
+      if (type === 'MILESTONE_VERIFIED') {
         setCelebration({
           type: 'milestone',
-          title: 'MILESTONE COMPLETED!',
-          subtitle: 'Validation Success',
+          title: 'MILESTONE ACCEPTED!',
+          subtitle: 'Milestone Accepted',
           description: msg,
           themeColor: 'text-status-success border-status-success/30 shadow-status-success/10',
+          isRejected: false,
+        });
+      } else if (type === 'MILESTONE_REJECTED') {
+        setCelebration({
+          type: 'milestone',
+          title: 'MILESTONE REJECTED!',
+          subtitle: 'Milestone Rejected',
+          description: msg,
+          themeColor: 'text-status-danger border-status-danger/30 shadow-status-danger/10',
+          isRejected: true,
         });
       }
     };
@@ -119,6 +128,9 @@ export const Layout = () => {
     }
 
     // Milestone completion
+    if (celebration.isRejected) {
+      return <XCircle className="w-16 h-16 text-status-danger animate-bounce" />;
+    }
     return <CheckCircle2 className="w-16 h-16 text-status-success animate-pulse" />;
   };
 
@@ -194,7 +206,13 @@ export const Layout = () => {
               </div>
 
               {/* Sparkle background indicator */}
-              <div className="inline-flex items-center gap-1 bg-accent-primary/10 text-accent-primary px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase mb-6 border border-accent-primary/20">
+              <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase mb-6 border ${
+                celebration.isRejected 
+                  ? 'bg-status-danger/10 text-status-danger border-status-danger/20' 
+                  : celebration.type === 'milestone'
+                    ? 'bg-status-success/10 text-status-success border-status-success/20'
+                    : 'bg-accent-primary/10 text-accent-primary border-accent-primary/20'
+              }`}>
                 <Sparkles className="w-3 h-3" />
                 {celebration.title}
               </div>
@@ -205,7 +223,9 @@ export const Layout = () => {
               </div>
 
               {/* Achievement Text */}
-              <h2 className="text-xl font-extrabold text-text-primary tracking-tight leading-snug">
+              <h2 className={`text-xl font-extrabold tracking-tight leading-snug ${
+                celebration.isRejected ? 'text-status-danger' : celebration.type === 'milestone' ? 'text-status-success' : 'text-text-primary'
+              }`}>
                 {celebration.subtitle}
               </h2>
               <p className="text-xs text-text-secondary mt-3 leading-relaxed px-2">
@@ -221,9 +241,13 @@ export const Layout = () => {
               {/* Confirm/Dismiss Button */}
               <button
                 onClick={() => setCelebration(null)}
-                className="mt-8 w-full py-2.5 bg-accent-primary hover:bg-accent-hover text-bg-primary font-bold text-xs rounded-xl transition-all cursor-pointer shadow-lg shadow-accent-primary/10 hover:shadow-accent-hover/20 hover:scale-[1.02] active:scale-[0.98]"
+                className={`mt-8 w-full py-2.5 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] ${
+                  celebration.isRejected
+                    ? 'bg-status-danger hover:bg-status-danger/90 text-text-primary shadow-status-danger/10 hover:shadow-status-danger/20'
+                    : 'bg-accent-primary hover:bg-accent-hover text-bg-primary shadow-accent-primary/10 hover:shadow-accent-hover/20'
+                }`}
               >
-                Awesome!
+                {celebration.isRejected ? 'Close' : 'Awesome!'}
               </button>
             </motion.div>
           </div>

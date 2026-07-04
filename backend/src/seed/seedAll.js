@@ -311,4 +311,4 @@ if (require.main === module) {
   seedDB();
 }
 
-module.exports = seedDB;
+module.exports = { seedDB, BADGES, MASTER_SKILLS };

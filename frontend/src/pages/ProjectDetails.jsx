@@ -294,8 +294,8 @@ export const ProjectDetails = () => {
     e.preventDefault();
     if (!evidenceText) return;
 
-    // Type validation
-    if (!evidenceUrl) {
+    // Type validation - URL is required for milestones other than the 1st one (index 1)
+    if (selectedMilestone.index !== 1 && !evidenceUrl) {
       alert('Please provide a live link URL.');
       return;
     }
@@ -774,16 +774,19 @@ export const ProjectDetails = () => {
               <p className="text-xs text-text-secondary mt-1">{selectedMilestone.title}</p>
               
               <p className="text-[10px] text-text-muted mt-3 mb-4 leading-normal bg-bg-secondary/40 p-2.5 rounded-lg border border-border-subtle/50">
-                <strong>Requirement:</strong> Please provide a working live link and implementation description. You can optionally attach supporting files (screenshots, README, deployment report, etc.).
+                <strong>Requirement:</strong> {selectedMilestone.index === 1
+                  ? "Please provide an implementation description. You can optionally provide a live link and attach supporting files (screenshots, diagrams, etc.)."
+                  : "Please provide a working live link and implementation description. You can optionally attach supporting files (screenshots, README, deployment report, etc.)."
+                }
               </p>
 
               <form onSubmit={handleEvidenceSubmit} className="flex flex-col space-y-4">
                 <Input
-                  label="Live Link URL (Compulsory)"
+                  label={selectedMilestone.index === 1 ? "Live Link URL (Optional)" : "Live Link URL (Compulsory)"}
                   placeholder="e.g. https://my-deployment.vercel.app"
                   value={evidenceUrl}
                   onChange={(e) => setEvidenceUrl(e.target.value)}
-                  required
+                  required={selectedMilestone.index !== 1}
                 />
 
                 <div className="flex flex-col space-y-2">
