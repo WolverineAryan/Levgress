@@ -108,6 +108,7 @@ const getLeaderboard = asyncHandler(async (req, res) => {
 
   // Map and sort by cumulative XP
   const leaderboard = allStats
+    .filter((s) => s.user !== null)
     .map((s) => {
       const cumulativeXP = gamificationService.getCumulativeXP(s.level, s.xp);
       return {
