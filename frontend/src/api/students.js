@@ -59,3 +59,7 @@ export const getStudentDetailedProfile = (id) => {
 export const getCohortAnalytics = (params = {}) => {
   return api.get('/students/cohort-analytics', { params });
 };
+
+export const getStudentByUsername = (username) => {
+  return api.get(`/students/by-username/${username}`);
+};

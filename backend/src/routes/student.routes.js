@@ -18,6 +18,7 @@ router.get('/ai-insights', restrictTo('STUDENT'), studentController.getAIInsight
 
 // Profiles and Skill Testing
 router.get('/profile/:id', studentController.getStudentProfile);
+router.get('/by-username/:username', studentController.getStudentByUsername);
 router.get('/skills/test/generate', restrictTo('STUDENT'), studentController.generateSkillQuestions);
 router.post('/skills/test/submit', restrictTo('STUDENT'), studentController.submitSkillTestResult);
 

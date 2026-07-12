@@ -69,6 +69,14 @@ const getAllProjects = asyncHandler(async (req, res) => {
   });
 });
 
+const likeProject = asyncHandler(async (req, res) => {
+  const project = await projectService.likeProject(req.params.id, req.user._id);
+  res.status(200).json({
+    status: 'success',
+    data: { project },
+  });
+});
+
 module.exports = {
   createProject,
   getMyProjects,
@@ -78,4 +86,5 @@ module.exports = {
   addComment,
   getComments,
   getAllProjects,
+  likeProject,
 };

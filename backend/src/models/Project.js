@@ -42,6 +42,12 @@ const projectSchema = new mongoose.Schema(
         fileData: { type: String, default: '' },
       },
     ],
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     timestamps: true,

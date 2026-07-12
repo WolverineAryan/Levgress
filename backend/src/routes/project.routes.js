@@ -18,7 +18,10 @@ router.delete('/:id', restrictTo('STUDENT'), projectController.deleteProject);
 router.post('/:id/comments', projectController.addComment);
 router.get('/:id/comments', projectController.getComments);
 
-// Staff dashboard: List all projects across students
-router.get('/', restrictTo('STAFF'), projectController.getAllProjects);
+// Fetch all projects across students (Open to all authenticated roles for showcase)
+router.get('/', projectController.getAllProjects);
+
+// Like/Unlike project
+router.post('/:id/like', projectController.likeProject);
 
 module.exports = router;

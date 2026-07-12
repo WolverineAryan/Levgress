@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['MILESTONE_VERIFIED', 'MILESTONE_REJECTED', 'COMMENT_ADDED', 'LEVEL_UP', 'BADGE_EARNED', 'STAGNATION_ALERT'],
+      enum: ['MILESTONE_VERIFIED', 'MILESTONE_REJECTED', 'COMMENT_ADDED', 'LEVEL_UP', 'BADGE_EARNED', 'STAGNATION_ALERT', 'POST_MENTION'],
       required: true,
     },
     message: {

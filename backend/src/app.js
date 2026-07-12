@@ -13,6 +13,7 @@ const projectRoutes = require('./routes/project.routes');
 const milestoneRoutes = require('./routes/milestone.routes');
 const studentRoutes = require('./routes/student.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const postRoutes = require('./routes/post.routes');
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/milestones', milestoneRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/posts', postRoutes);
 
 // Fallback for unhandled routes
 app.all('*', (req, res, next) => {

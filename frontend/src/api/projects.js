@@ -31,3 +31,7 @@ export const getComments = (projectId) => {
 export const getAllProjects = (params = {}) => {
   return api.get('/projects', { params });
 };
+
+export const likeProject = (id) => {
+  return api.post(`/projects/${id}/like`);
+};

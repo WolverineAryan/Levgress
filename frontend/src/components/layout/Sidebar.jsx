@@ -11,7 +11,8 @@ import {
   User,
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  Globe
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../utils/classnames';
@@ -29,11 +30,13 @@ export const Sidebar = () => {
     { to: '/badges', label: 'Badges', icon: Award },
     { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { to: '/ai-insights', label: 'AI Insights', icon: Brain },
+    { to: '/showcase', label: 'Showcase Feed', icon: Globe },
   ];
 
   const staffLinks = [
     { to: '/staff-dashboard', label: 'Overview', icon: LayoutDashboard },
     { to: '/project-review', label: 'Projects Portfolio', icon: ClipboardList },
+    { to: '/showcase', label: 'Showcase Feed', icon: Globe },
   ];
 
   const activeStyle = 'bg-accent-primary/10 text-accent-primary border-l-2 border-accent-primary';

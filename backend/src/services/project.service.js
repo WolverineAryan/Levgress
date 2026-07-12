@@ -224,6 +224,23 @@ const getAllProjects = async (filters = {}) => {
     .sort({ updatedAt: -1 });
 };
 
+const likeProject = async (projectId, userId) => {
+  const project = await Project.findById(projectId);
+  if (!project) {
+    throw new NotFoundError('Project not found');
+  }
+
+  const hasLiked = project.likes.includes(userId);
+  if (hasLiked) {
+    project.likes.pull(userId);
+  } else {
+    project.likes.push(userId);
+  }
+
+  await project.save();
+  return project;
+};
+
 module.exports = {
   createProject,
   getStudentProjects,
@@ -233,4 +250,5 @@ module.exports = {
   addComment,
   getComments,
   getAllProjects,
+  likeProject,
 };

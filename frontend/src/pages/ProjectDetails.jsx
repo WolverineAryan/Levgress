@@ -598,7 +598,7 @@ export const ProjectDetails = () => {
                         </span>
                       )}
 
-                      {isActive && user?.role === 'STUDENT' && (
+                      {isActive && isOwnProject && user?.role === 'STUDENT' && (
                         <Button
                           onClick={() => openEvidenceModal(m)}
                           className="text-xs px-3 py-1.5"
@@ -607,7 +607,7 @@ export const ProjectDetails = () => {
                         </Button>
                       )}
 
-                      {isRejected && user?.role === 'STUDENT' && (
+                      {isRejected && isOwnProject && user?.role === 'STUDENT' && (
                         <Button
                           onClick={() => openEvidenceModal(m)}
                           variant="danger"

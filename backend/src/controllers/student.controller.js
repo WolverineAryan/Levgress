@@ -933,6 +933,22 @@ const getMasterSkills = asyncHandler(async (req, res) => {
   });
 });
 
+const getStudentByUsername = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  const user = await User.findOne({ username: username.toLowerCase() });
+  if (!user) {
+    throw new NotFoundError('User with this username not found');
+  }
+  res.status(200).json({
+    status: 'success',
+    data: {
+      userId: user._id,
+      role: user.role,
+      name: user.name,
+    },
+  });
+});
+
 module.exports = {
   getStudentDashboard,
   getMasterSkills,
@@ -946,6 +962,7 @@ module.exports = {
   getStudentProfile,
   generateSkillQuestions,
   submitSkillTestResult,
+  getStudentByUsername,
   // Instructor endpoints
   getAllStudents,
   getStudentDetailedProfile,

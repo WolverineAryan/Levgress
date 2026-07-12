@@ -20,6 +20,7 @@ import { Onboarding } from './pages/Onboarding';
 import { UserProfile } from './pages/UserProfile';
 import { SkillTester } from './pages/SkillTester';
 import { Settings } from './pages/Settings';
+import { ProjectsShowcase } from './pages/ProjectsShowcase';
 
 function App() {
   return (
@@ -122,6 +123,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['STUDENT']}>
                     <SkillTester />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/showcase"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'STAFF']}>
+                    <ProjectsShowcase />
                   </ProtectedRoute>
                 }
               />
