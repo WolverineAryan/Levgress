@@ -4,6 +4,7 @@ import * as studentsApi from '../api/students';
 import * as milestonesApi from '../api/milestones';
 import * as projectsApi from '../api/projects';
 import { Card, CardHeader, CardTitle, CardContent, Button, GithubIcon } from '../components/ui';
+import { Leaderboard } from './Leaderboard';
 import { 
   ClipboardList, 
   Users, 
@@ -25,7 +26,8 @@ import {
   Lock,
   Send,
   Loader2,
-  Globe
+  Globe,
+  Trophy
 } from 'lucide-react';
 import { formatDateTime } from '../utils/date';
 import { cn } from '../utils/classnames';
@@ -312,6 +314,17 @@ export const StaffDashboard = () => {
           )}
         >
           <BarChart3 size={14} /> Cohort Analytics
+        </button>
+        <button
+          onClick={() => setActiveTab('leaderboard')}
+          className={cn(
+            "px-4 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all border border-transparent cursor-pointer",
+            activeTab === 'leaderboard'
+              ? "bg-accent-primary/10 text-accent-primary border-accent-primary/20"
+              : "text-text-secondary hover:text-text-primary"
+          )}
+        >
+          <Trophy size={14} /> Class Leaderboard
         </button>
       </div>
 
@@ -1164,6 +1177,11 @@ export const StaffDashboard = () => {
               })()}
             </div>
           )}
+        </div>
+      )}
+      {activeTab === 'leaderboard' && (
+        <div className="animate-in fade-in duration-200">
+          <Leaderboard />
         </div>
       )}
     </div>

@@ -37,6 +37,7 @@ export const Sidebar = () => {
     { to: '/staff-dashboard', label: 'Overview', icon: LayoutDashboard },
     { to: '/project-review', label: 'Projects Portfolio', icon: ClipboardList },
     { to: '/showcase', label: 'Showcase Feed', icon: Globe },
+    { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   ];
 
   const activeStyle = 'bg-accent-primary/10 text-accent-primary border-l-2 border-accent-primary';
