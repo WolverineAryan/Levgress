@@ -127,16 +127,6 @@ const runSeeder = async () => {
     const students = await User.find({ role: 'STUDENT' });
     console.log(`Found ${students.length} students in the database.`);
 
-    console.log('Clearing old mock projects and milestones to start fresh...');
-    // Delete all projects and milestones owned by these students to rebuild cleanly
-    const studentIds = students.map((s) => s._id);
-    const existingProjects = await Project.find({ student: { $in: studentIds } });
-    const projectIds = existingProjects.map((p) => p._id);
-    
-    await Project.deleteMany({ student: { $in: studentIds } });
-    await Milestone.deleteMany({ project: { $in: projectIds } });
-    console.log('Old projects and milestones cleared.');
-
     let seededCount = 0;
 
     for (const student of students) {
@@ -150,6 +140,19 @@ const runSeeder = async () => {
           streak: 0,
           skills: [],
         });
+      }
+
+      // STRICT PROTECTION: Only modify users with 0 XP
+      if (stats.xp > 0) {
+        console.log(`Skipping active student user (has original XP): ${student.name} (${stats.xp} XP)`);
+        continue;
+      }
+
+      // Check if student already has projects to avoid duplicate seeds on multiple runs
+      const projectCount = await Project.countDocuments({ student: student._id });
+      if (projectCount > 0) {
+        console.log(`Skipping student user (already has projects seeded): ${student.name}`);
+        continue;
       }
 
       // Add basic skills to stats
@@ -194,7 +197,7 @@ const runSeeder = async () => {
             title: m.title,
             description: m.description,
             status,
-            aiScore: randomStatus === 'COMPLETED' ? Math.floor(Math.random() * 20) + 80 : 0, // 80-99 score if completed
+            aiScore: randomStatus === 'COMPLETED' ? Math.floor(Math.random() * 20) + 80 : 0,
             aiFeedback: randomStatus === 'COMPLETED' ? 'Excellent implementation of this milestone!' : '',
           };
         });
@@ -205,7 +208,7 @@ const runSeeder = async () => {
       seededCount++;
     }
 
-    console.log(`Successfully seeded diverse projects and skills for ${seededCount} student(s).`);
+    console.log(`Successfully seeded diverse projects and skills for ${seededCount} student(s) with 0 XP.`);
     process.exit(0);
   } catch (error) {
     console.error('Error running seeder:', error);

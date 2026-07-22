@@ -40,6 +40,9 @@ const runXPSeeder = async () => {
           streak: 0,
           skills: [],
         });
+      } else if (stats.xp > 0) {
+        console.log(`Skipping active student user (has original XP): ${student.name} (${stats.xp} XP)`);
+        continue;
       }
 
       // 1. Randomize level (between 1 and 6)
