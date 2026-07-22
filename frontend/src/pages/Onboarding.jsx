@@ -184,6 +184,53 @@ export const Onboarding = () => {
     reader.readAsDataURL(file);
   };
 
+  const [aiParsing, setAiParsing] = useState(false);
+
+  const handleAiResumeFill = async () => {
+    if (!resumeFile || !resumeFile.fileData) {
+      setError('Please select/upload a resume PDF first');
+      return;
+    }
+
+    setAiParsing(true);
+    setError('');
+    try {
+      const res = await api.post('/students/parse-resume', {
+        resumeData: resumeFile.fileData,
+        fileName: resumeFile.fileName,
+      });
+
+      const { resumeUrl: uploadedUrl, parsedDetails } = res.data.data;
+
+      // Fill form values!
+      if (parsedDetails.name && parsedDetails.name !== 'Full Name') {
+        setName(parsedDetails.name);
+      }
+      if (parsedDetails.bio) {
+        setBio(parsedDetails.bio);
+      }
+      if (parsedDetails.githubUrl) {
+        setGithubUrl(parsedDetails.githubUrl);
+      }
+      if (parsedDetails.linkedinUrl) {
+        setLinkedinUrl(parsedDetails.linkedinUrl);
+      }
+      if (parsedDetails.portfolioUrl) {
+        setPortfolioUrl(parsedDetails.portfolioUrl);
+      }
+      if (uploadedUrl) {
+        setResumeUrl(uploadedUrl);
+      }
+
+      alert('AI has successfully parsed your resume and filled the details!');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Failed to parse resume with AI');
+    } finally {
+      setAiParsing(false);
+    }
+  };
+
   // Statuses
   const [usernameStatus, setUsernameStatus] = useState('idle'); // 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
   const [usernameError, setUsernameError] = useState('');
@@ -800,6 +847,26 @@ export const Onboarding = () => {
                         onChange={handleFileChange}
                         className="text-[11px] text-text-muted file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20 file:cursor-pointer"
                       />
+                      {resumeFile && (
+                        <button
+                          type="button"
+                          disabled={aiParsing}
+                          onClick={handleAiResumeFill}
+                          className="w-full flex items-center justify-center gap-1.5 mt-2 py-1.5 px-3 bg-accent-primary/10 hover:bg-accent-primary/20 text-accent-primary rounded-lg text-[10px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          {aiParsing ? (
+                            <>
+                              <SpinnerIcon className="w-3.5 h-3.5 animate-spin" />
+                              <span>Parsing Resume Content...</span>
+                            </>
+                          ) : (
+                            <>
+                              <SparklesIcon size={14} className="text-accent-primary animate-pulse" />
+                              <span>AI Auto-fill Details from Resume</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
 

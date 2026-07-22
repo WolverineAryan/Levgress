@@ -31,7 +31,9 @@ import {
   CheckCircle, 
   CheckCircle2, 
   PlusCircle, 
-  ChevronLeft
+  ChevronLeft,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 const Github = ({ className = '', size = 16, ...props }) => (
@@ -123,6 +125,7 @@ export const UserProfile = () => {
    const [editResumeFile, setEditResumeFile] = useState(null);
   const [saveLoading, setSaveLoading] = useState(false);
   const [editBadgeTitle, setEditBadgeTitle] = useState('');
+  const [aiParsing, setAiParsing] = useState(false);
 
   // Project creation/edit modal states
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -326,6 +329,50 @@ export const UserProfile = () => {
       });
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleAiResumeFill = async () => {
+    if (!editResumeFile || !editResumeFile.fileData) {
+      alert('Please upload a PDF resume file first.');
+      return;
+    }
+
+    setAiParsing(true);
+    try {
+      const res = await api.post('/students/parse-resume', {
+        resumeData: editResumeFile.fileData,
+        fileName: editResumeFile.fileName,
+      });
+
+      const { resumeUrl: uploadedUrl, parsedDetails } = res.data.data;
+
+      // Fill form values!
+      if (parsedDetails.name && parsedDetails.name !== 'Full Name') {
+        setEditName(parsedDetails.name);
+      }
+      if (parsedDetails.bio) {
+        setEditBio(parsedDetails.bio);
+      }
+      if (parsedDetails.githubUrl) {
+        setEditGithub(parsedDetails.githubUrl);
+      }
+      if (parsedDetails.linkedinUrl) {
+        setEditLinkedin(parsedDetails.linkedinUrl);
+      }
+      if (parsedDetails.portfolioUrl) {
+        setEditPortfolio(parsedDetails.portfolioUrl);
+      }
+      if (uploadedUrl) {
+        setEditResumeUrl(uploadedUrl);
+      }
+
+      alert('AI has successfully parsed your resume and pre-filled your details! Click "Save Changes" to apply.');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to parse resume with AI');
+    } finally {
+      setAiParsing(false);
+    }
   };
 
   const handleSaveProfile = async (e) => {
@@ -884,6 +931,26 @@ export const UserProfile = () => {
                       <span className="text-[10px] text-status-success font-semibold mt-1">
                         Attached PDF file: {editResumeFile.fileName}
                       </span>
+                    )}
+                    {editResumeFile && (
+                      <button
+                        type="button"
+                        disabled={aiParsing}
+                        onClick={handleAiResumeFill}
+                        className="flex items-center justify-center gap-1.5 mt-2 py-1.5 px-3 bg-accent-primary/10 hover:bg-accent-primary/20 text-accent-primary rounded-lg text-[10px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer w-full border-none"
+                      >
+                        {aiParsing ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Parsing Resume Content...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5 text-accent-primary animate-pulse" />
+                            <span>AI Auto-fill Profile from Resume</span>
+                          </>
+                        )}
+                      </button>
                     )}
                   </div>
                 </>

@@ -63,3 +63,7 @@ export const getCohortAnalytics = (params = {}) => {
 export const getStudentByUsername = (username) => {
   return api.get(`/students/by-username/${username}`);
 };
+
+export const parseResume = (resumeData, fileName) => {
+  return api.post('/students/parse-resume', { resumeData, fileName });
+};

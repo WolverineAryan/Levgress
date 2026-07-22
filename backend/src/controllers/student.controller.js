@@ -14,6 +14,10 @@ const { getRealisticQuiz, shuffleQuiz } = require('../utils/mockQuizzes');
 const QuizQuestion = require('../models/QuizQuestion');
 const MasterSkill = require('../models/MasterSkill');
 
+const pdfParse = require('pdf-parse');
+const supabaseService = require('../services/supabase.service');
+const aiResumeService = require('../services/aiResume.service');
+
 const populateStatsSkills = async (skills) => {
   const masterSkills = await MasterSkill.find();
   const masterMap = new Map(masterSkills.map(s => [s.name.toLowerCase(), s]));
@@ -949,6 +953,90 @@ const getStudentByUsername = asyncHandler(async (req, res) => {
   });
 });
 
+const parseResume = asyncHandler(async (req, res) => {
+  const { resumeData, fileName } = req.body;
+
+  if (!resumeData) {
+    throw new ValidationError('Resume data (Base64) is required');
+  }
+
+  // 1. Parse PDF text
+  let extractedText = '';
+  try {
+    const matches = resumeData.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      throw new ValidationError('Invalid Base64 resume file format');
+    }
+    const base64String = matches[2];
+    const buffer = Buffer.from(base64String, 'base64');
+    
+    const parsedPdf = await pdfParse(buffer);
+    extractedText = parsedPdf.text || '';
+  } catch (err) {
+    console.error('Failed to parse PDF text content:', err);
+    throw new ValidationError('Could not extract text from the PDF file. Please ensure it is a text-based PDF.');
+  }
+
+  if (!extractedText || !extractedText.trim()) {
+    throw new ValidationError('No readable text found in the uploaded resume.');
+  }
+
+  // 2. Query AI model to parse extracted text
+  const parsedDetails = await aiResumeService.parseResumeText(extractedText);
+
+  // 3. Upload file to Supabase Storage
+  let resumeUrl = '';
+  try {
+    resumeUrl = await supabaseService.uploadBase64File(
+      resumeData,
+      'levgress-assets',
+      'resumes',
+      `resume_${req.user._id}`
+    );
+  } catch (uploadErr) {
+    console.error('Failed to upload resume to Supabase Storage:', uploadErr);
+    // Continue anyway since we have parsed details
+  }
+
+  // 4. Update user profile details
+  const updateData = {};
+  if (resumeUrl) {
+    updateData.resumeUrl = resumeUrl;
+    updateData.resumeFile = {
+      fileName: fileName || 'resume.pdf',
+      fileData: resumeUrl,
+    };
+  }
+
+  // If AI successfully parsed details, update user profile fields
+  if (parsedDetails.name && parsedDetails.name !== 'Full Name') {
+    updateData.name = parsedDetails.name;
+  }
+  if (parsedDetails.bio) {
+    updateData.bio = parsedDetails.bio;
+  }
+  if (parsedDetails.githubUrl) {
+    updateData.githubUrl = parsedDetails.githubUrl;
+  }
+  if (parsedDetails.linkedinUrl) {
+    updateData.linkedinUrl = parsedDetails.linkedinUrl;
+  }
+  if (parsedDetails.portfolioUrl) {
+    updateData.portfolioUrl = parsedDetails.portfolioUrl;
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      resumeUrl: updatedUser.resumeUrl,
+      parsedDetails,
+      user: updatedUser,
+    },
+  });
+});
+
 module.exports = {
   getStudentDashboard,
   getMasterSkills,
@@ -963,6 +1051,7 @@ module.exports = {
   generateSkillQuestions,
   submitSkillTestResult,
   getStudentByUsername,
+  parseResume,
   // Instructor endpoints
   getAllStudents,
   getStudentDetailedProfile,
