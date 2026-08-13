@@ -107,7 +107,7 @@ const getStudentDashboard = asyncHandler(async (req, res) => {
 
 const getLeaderboard = asyncHandler(async (req, res) => {
   const allStats = await StudentStats.find()
-    .populate('user', 'name email avatar')
+    .populate('user', 'name avatar')
     .exec();
 
   // Map and sort by cumulative XP
@@ -118,7 +118,6 @@ const getLeaderboard = asyncHandler(async (req, res) => {
       return {
         studentId: s.user._id,
         name: s.user.name,
-        email: s.user.email,
         avatar: s.user.avatar,
         level: s.level,
         xp: s.xp,
@@ -479,7 +478,7 @@ const getStudentProfile = asyncHandler(async (req, res) => {
       profile: {
         _id: user._id,
         name: user.name,
-        email: user.email,
+        email: (req.user.role === 'STAFF' || req.user._id.toString() === user._id.toString()) ? user.email : undefined,
         username: user.username,
         avatar: user.avatar,
         bio: user.bio,

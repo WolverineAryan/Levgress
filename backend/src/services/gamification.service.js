@@ -126,18 +126,25 @@ const updateStreak = async (studentId) => {
   const stats = await getOrCreateStats(studentId);
 
   const now = new Date();
-  const lastActive = new Date(stats.lastActive);
-
-  // Check difference in days
-  const diffTime = Math.abs(now - lastActive);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 1) {
-    // Active on consecutive day, increment streak
-    stats.streak += 1;
-  } else if (diffDays > 1) {
-    // Broke the streak
+  
+  if (stats.streak === 0) {
     stats.streak = 1;
+  } else {
+    const lastActive = new Date(stats.lastActive);
+    
+    // Calculate calendar day difference in UTC
+    const d1 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const d2 = new Date(Date.UTC(lastActive.getUTCFullYear(), lastActive.getUTCMonth(), lastActive.getUTCDate()));
+    const diffDays = Math.round((d1 - d2) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      // Active on consecutive day, increment streak
+      stats.streak += 1;
+    } else if (diffDays > 1) {
+      // Broke the streak, reset to 1
+      stats.streak = 1;
+    }
+    // If diffDays === 0 (same day), leave streak unchanged
   }
 
   stats.lastActive = now;
@@ -234,8 +241,26 @@ const deleteSkill = async (studentId, name) => {
 };
 
 const updateSkillXP = async (studentId, name, category, amount) => {
-  // Now a wrapper to auto-add skills without levels
-  await addSkill(studentId, name, category || 'Other');
+  const stats = await getOrCreateStats(studentId);
+
+  // Check if skill already exists
+  let skill = stats.skills.find(
+    (s) => s.name.toLowerCase() === name.toLowerCase()
+  );
+
+  if (!skill) {
+    // Fetch skill type
+    const masterSkill = await MasterSkill.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+    const type = masterSkill ? masterSkill.type : 'TECHNOLOGY';
+    const finalCategory = category || (masterSkill ? masterSkill.category : 'Other');
+    stats.skills.push({ name, category: finalCategory, tier: 'UNVERIFIED', type, xp: amount });
+  } else {
+    // Increment existing skill XP
+    skill.xp = (skill.xp || 0) + amount;
+  }
+
+  await stats.save();
+  return stats;
 };
 
 const submitSkillTest = async (studentId, skillName, tier) => {

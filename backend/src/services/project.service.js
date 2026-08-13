@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Project = require('../models/Project');
 const supabaseService = require('./supabase.service');
 const Milestone = require('../models/Milestone');
@@ -35,7 +36,7 @@ const DEFAULT_MILESTONES = [
 ];
 
 const createProject = async (studentId, projectData) => {
-  const { title, description, githubUrl, liveUrl, techStack } = projectData;
+  const { title, description, githubUrl, liveUrl, techStack, visibility } = projectData;
 
   if (!title || !description) {
     throw new ValidationError('Title and description are required');
@@ -50,6 +51,7 @@ const createProject = async (studentId, projectData) => {
     liveUrl,
     techStack: techStack || [],
     status: 'PLANNING',
+    visibility: visibility || 'PRIVATE',
   });
 
   // Create the 5 milestones
@@ -84,10 +86,18 @@ const getStudentProjects = async (studentId) => {
   return Project.find({ student: studentId }).sort({ createdAt: -1 });
 };
 
-const getProjectById = async (projectId) => {
+const getProjectById = async (projectId, requestingUserId = null, requestingUserRole = null) => {
   const project = await Project.findById(projectId).populate('student', 'name email avatar');
   if (!project) {
     throw new NotFoundError('Project not found');
+  }
+
+  const isOwner = requestingUserId && project.student._id.toString() === requestingUserId.toString();
+  const isStaff = requestingUserRole === 'STAFF';
+  const isPublic = project.visibility === 'PUBLIC';
+
+  if (!isOwner && !isStaff && !isPublic) {
+    throw new ForbiddenError('You do not have permission to access this project');
   }
 
   const milestones = await Milestone.find({ project: projectId }).sort({ index: 1 });
@@ -108,7 +118,7 @@ const updateProject = async (projectId, studentId, updateData) => {
     throw new ForbiddenError('You can only update your own projects');
   }
 
-  const allowedFields = ['title', 'description', 'githubUrl', 'liveUrl', 'techStack', 'status'];
+  const allowedFields = ['title', 'description', 'githubUrl', 'liveUrl', 'techStack', 'status', 'visibility'];
   allowedFields.forEach((field) => {
     if (updateData[field] !== undefined) {
       project[field] = updateData[field];
@@ -141,21 +151,39 @@ const updateProject = async (projectId, studentId, updateData) => {
 };
 
 const deleteProject = async (projectId, studentId) => {
-  const project = await Project.findById(projectId);
-  if (!project) {
-    throw new NotFoundError('Project not found');
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const project = await Project.findById(projectId).session(session);
+    if (!project) {
+      throw new NotFoundError('Project not found');
+    }
+
+    if (project.student.toString() !== studentId.toString()) {
+      throw new ForbiddenError('You can only delete your own projects');
+    }
+
+    // Delete project, milestones, and comments within the transaction session
+    await Project.findByIdAndDelete(projectId).session(session);
+    await Milestone.deleteMany({ project: projectId }).session(session);
+    await Comment.deleteMany({ project: projectId }).session(session);
+
+    // Log deletion activity
+    await ActivityLog.create([{
+      student: studentId,
+      activityType: 'PROJECT_DELETE',
+      details: `Deleted project "${project.title}"`,
+    }], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+    return { success: true };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-
-  if (project.student.toString() !== studentId.toString()) {
-    throw new ForbiddenError('You can only delete your own projects');
-  }
-
-  // Delete project, milestones, and comments
-  await Project.findByIdAndDelete(projectId);
-  await Milestone.deleteMany({ project: projectId });
-  await Comment.deleteMany({ project: projectId });
-
-  return { success: true };
 };
 
 const addComment = async (projectId, authorId, text, parentId = null) => {
@@ -213,15 +241,38 @@ const getComments = async (projectId) => {
     .sort({ createdAt: 1 });
 };
 
-// Staff Action: Get all projects across all students
-const getAllProjects = async (filters = {}) => {
+// Staff Action & Public Showcase: Get all projects across all students (with pagination and visibility checks)
+const getAllProjects = async (filters = {}, requestingUserId = null, requestingUserRole = null) => {
   const query = {};
   if (filters.status) query.status = filters.status;
   if (filters.studentId) query.student = filters.studentId;
 
-  return Project.find(query)
+  // Enforce visibility restriction for STUDENTs
+  if (requestingUserRole === 'STUDENT') {
+    query.$or = [
+      { visibility: 'PUBLIC' },
+      { student: requestingUserId }
+    ];
+  }
+
+  // Parse pagination parameters
+  const page = parseInt(filters.page, 10) || 1;
+  const limit = Math.min(parseInt(filters.limit, 10) || 20, 50);
+  const skip = (page - 1) * limit;
+
+  const total = await Project.countDocuments(query);
+  const projects = await Project.find(query)
     .populate('student', 'name email avatar')
-    .sort({ updatedAt: -1 });
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    projects,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 const likeProject = async (projectId, userId) => {

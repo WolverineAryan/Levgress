@@ -215,16 +215,8 @@ const onboardUser = async (userId, onboardingData) => {
     department,
   } = onboardingData;
 
-  if (!name || !username || !role) {
-    throw new ValidationError('Name, username, and role are required for onboarding');
-  }
-
-  if (!['STUDENT', 'STAFF'].includes(role)) {
-    throw new ValidationError('Invalid role selected');
-  }
-
-  if (role === 'STAFF' && !phoneNumber) {
-    throw new ValidationError('Phone number is required for instructors');
+  if (!name || !username) {
+    throw new ValidationError('Name and username are required for onboarding');
   }
 
   const cleanUsername = username.trim().toLowerCase();
@@ -249,12 +241,18 @@ const onboardUser = async (userId, onboardingData) => {
     throw new ValidationError('User not found');
   }
 
+  // Use the role defined on the user document (cannot be escalated via onboarding input)
+  const userRole = user.role || 'STUDENT';
+
+  if (userRole === 'STAFF' && !phoneNumber) {
+    throw new ValidationError('Phone number is required for instructors');
+  }
+
   // Update user details
   user.name = name.trim();
   user.username = cleanUsername;
-  user.role = role;
 
-  if (role === 'STAFF') {
+  if (userRole === 'STAFF') {
     user.phoneNumber = phoneNumber.trim();
     // Clear student-specific fields to keep instructor profile minimal
     user.avatar = '';

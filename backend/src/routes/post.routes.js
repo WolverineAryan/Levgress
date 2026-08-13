@@ -9,6 +9,7 @@ router.use(protect);
 
 router.post('/', postController.createPost);
 router.get('/', postController.getAllPosts);
+router.get('/:id', postController.getPostById);
 router.post('/:id/like', postController.likePost);
 router.post('/:id/comments', postController.addComment);
 router.delete('/:id', postController.deletePost);

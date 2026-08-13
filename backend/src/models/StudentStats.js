@@ -20,6 +20,10 @@ const skillProgressSchema = new mongoose.Schema({
     default: 'TECHNOLOGY',
     required: true,
   },
+  xp: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const studentStatsSchema = new mongoose.Schema(

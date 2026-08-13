@@ -67,19 +67,51 @@ const createPost = asyncHandler(async (req, res) => {
 
 // Get all posts for feed
 const getAllPosts = asyncHandler(async (req, res) => {
-  const posts = await Post.find()
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = Math.min(parseInt(req.query.limit, 10) || 10, 30);
+  const skip = (page - 1) * limit;
+
+  const total = await Post.countDocuments();
+  const posts = await Post.find({}, { comments: { $slice: 3 } })
     .populate('author', 'name email avatar role')
     .populate({
       path: 'project',
       populate: { path: 'student', select: 'name email avatar' }
     })
     .populate('comments.author', 'name email avatar role')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
   res.status(200).json({
     status: 'success',
     results: posts.length,
-    data: { posts },
+    data: {
+      posts,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
+});
+
+// Get a single post by ID
+const getPostById = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id)
+    .populate('author', 'name email avatar role')
+    .populate({
+      path: 'project',
+      populate: { path: 'student', select: 'name email avatar' }
+    })
+    .populate('comments.author', 'name email avatar role');
+
+  if (!post) {
+    throw new NotFoundError('Post not found');
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: { post },
   });
 });
 
@@ -190,6 +222,7 @@ const deletePost = asyncHandler(async (req, res) => {
 module.exports = {
   createPost,
   getAllPosts,
+  getPostById,
   likePost,
   addComment,
   deletePost,

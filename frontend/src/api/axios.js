@@ -1,9 +1,8 @@
-const API_URL = 'http://localhost:5000/api'; // Fallback
 import axios from 'axios';
-import { API_URL as ENV_API_URL } from '../config/env';
+import { API_URL } from '../config/env';
 
 const api = axios.create({
-  baseURL: ENV_API_URL || API_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },

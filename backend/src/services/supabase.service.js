@@ -24,6 +24,9 @@ const getFileExtension = (contentType) => {
 
 const uploadBase64File = async (base64Data, bucketName, folderPath, defaultFileName) => {
   if (!supabase) {
+    if (config.nodeEnv === 'production') {
+      throw new Error('Supabase client is not initialized. Remote storage uploads are required in production.');
+    }
     return base64Data;
   }
 
@@ -63,8 +66,11 @@ const uploadBase64File = async (base64Data, bucketName, folderPath, defaultFileN
 
     return urlData.publicUrl;
   } catch (err) {
-    console.error('Error uploading to Supabase Storage:', err.message || err);
-    // Safe fallback to original base64 data so the user request doesn't fail
+    console.error('Supabase upload exception caught:', err);
+    if (config.nodeEnv === 'production') {
+      throw new Error(`Supabase upload failed: ${err.message || err}`);
+    }
+    // Fallback to returning raw base64 data to keep app running in dev
     return base64Data;
   }
 };

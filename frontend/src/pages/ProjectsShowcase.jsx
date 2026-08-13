@@ -28,6 +28,9 @@ export const ProjectsShowcase = () => {
   const [posts, setProjects] = useState([]); // keep name similar to preserve structure
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   
   // Create Post states
   const [postText, setPostText] = useState('');
@@ -73,17 +76,38 @@ export const ProjectsShowcase = () => {
     });
   };
 
-  const fetchFeed = async () => {
+  const fetchFeed = async (pageToFetch = 1, append = false) => {
     try {
-      setLoading(true);
+      if (pageToFetch === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError('');
-      const res = await postsApi.getAllPosts();
-      setProjects(res.data.data.posts || []);
+      const res = await postsApi.getAllPosts({ page: pageToFetch, limit: 10 });
+      const newPosts = res.data.data.posts || [];
+      const totalPages = res.data.data.totalPages || 1;
+
+      if (append) {
+        setProjects((prev) => [...prev, ...newPosts]);
+      } else {
+        setProjects(newPosts);
+      }
+
+      setPage(pageToFetch);
+      setHasMore(pageToFetch < totalPages);
     } catch (err) {
       console.error(err);
       setError('Failed to load engineering showcase feed.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchFeed(page + 1, true);
     }
   };
 
@@ -99,7 +123,7 @@ export const ProjectsShowcase = () => {
   };
 
   useEffect(() => {
-    fetchFeed();
+    fetchFeed(1, false);
     fetchMyProjects();
   }, [user]);
 
@@ -523,6 +547,24 @@ export const ProjectsShowcase = () => {
                 </Card>
               );
             })}
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="text-xs font-bold px-6 py-2 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Loading More...</span>
+                    </>
+                  ) : (
+                    <span>Load More Activity</span>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

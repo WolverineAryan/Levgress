@@ -48,6 +48,11 @@ const projectSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    visibility: {
+      type: String,
+      enum: ['PUBLIC', 'PRIVATE'],
+      default: 'PRIVATE',
+    },
   },
   {
     timestamps: true,

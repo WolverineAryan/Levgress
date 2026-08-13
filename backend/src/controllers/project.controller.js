@@ -19,7 +19,7 @@ const getMyProjects = asyncHandler(async (req, res) => {
 });
 
 const getProjectById = asyncHandler(async (req, res) => {
-  const result = await projectService.getProjectById(req.params.id);
+  const result = await projectService.getProjectById(req.params.id, req.user._id, req.user.role);
   res.status(200).json({
     status: 'success',
     data: result,
@@ -59,13 +59,13 @@ const getComments = asyncHandler(async (req, res) => {
   });
 });
 
-// Staff dashboard route: Get all projects
+// Staff dashboard & Showcase route: Get all projects
 const getAllProjects = asyncHandler(async (req, res) => {
-  const projects = await projectService.getAllProjects(req.query);
+  const result = await projectService.getAllProjects(req.query, req.user._id, req.user.role);
   res.status(200).json({
     status: 'success',
-    results: projects.length,
-    data: { projects },
+    results: result.projects.length,
+    data: result,
   });
 });
 

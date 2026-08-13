@@ -4,10 +4,16 @@ const path = require('path');
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
+const isProduction = (process.env.NODE_ENV || 'development') === 'production';
+
+if (isProduction && !process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required in production mode!');
+}
+
 const config = {
   port: process.env.PORT || 5000,
   mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/levgress',
-  jwtSecret: process.env.JWT_SECRET || 'levgress_secret_key_rebuild_2026_xyz',
+  jwtSecret: process.env.JWT_SECRET || 'levgress_dev_secret_key_rebuild_2026_xyz',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -17,7 +23,10 @@ const config = {
   supabaseKey: process.env.SUPABASE_KEY || '',
 };
 
-// Simple validation
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET is not set. Falling back to a insecure development key.');
+}
+
 if (!process.env.GROQ_API_KEY && config.nodeEnv === 'production') {
   console.warn('WARNING: GROQ_API_KEY is not set in production. AI evaluation will fail.');
 }

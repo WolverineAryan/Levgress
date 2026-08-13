@@ -54,6 +54,16 @@ const milestoneSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   {
     timestamps: true,
