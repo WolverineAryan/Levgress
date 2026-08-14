@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as studentsApi from '../api/students';
 import * as milestonesApi from '../api/milestones';
 import * as projectsApi from '../api/projects';
@@ -44,9 +44,15 @@ const DEPARTMENTS = [
 
 export const StaffDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
-  // Tab navigation
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'roster' | 'analytics'
+  // Tab navigation driven by URL query parameter 'tab'
+  const currentTabParam = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(currentTabParam);
+
+  useEffect(() => {
+    setActiveTab(currentTabParam);
+  }, [currentTabParam]);
 
   // Global filters
   const [selectedBatch, setSelectedBatch] = useState('All Batches');
@@ -264,68 +270,6 @@ export const StaffDashboard = () => {
             </select>
           </div>
         </div>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-border-subtle/50 pb-2">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all border border-transparent cursor-pointer",
-            activeTab === 'overview'
-              ? "bg-accent-primary/10 text-accent-primary border-accent-primary/20"
-              : "text-text-secondary hover:text-text-primary"
-          )}
-        >
-          <LayoutGrid size={14} /> Overview Feed
-        </button>
-        <button
-          onClick={() => setActiveTab('roster')}
-          className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all border border-transparent cursor-pointer",
-            activeTab === 'roster'
-              ? "bg-accent-primary/10 text-accent-primary border-accent-primary/20"
-              : "text-text-secondary hover:text-text-primary"
-          )}
-        >
-          <Users size={14} /> Student Roster
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('projects');
-            setSelectedProj(null);
-          }}
-          className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all border border-transparent cursor-pointer",
-            activeTab === 'projects'
-              ? "bg-accent-primary/10 text-accent-primary border-accent-primary/20"
-              : "text-text-secondary hover:text-text-primary"
-          )}
-        >
-          <ClipboardList size={14} /> Projects Portfolio
-        </button>
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all border border-transparent cursor-pointer",
-            activeTab === 'analytics'
-              ? "bg-accent-primary/10 text-accent-primary border-accent-primary/20"
-              : "text-text-secondary hover:text-text-primary"
-          )}
-        >
-          <BarChart3 size={14} /> Cohort Analytics
-        </button>
-        <button
-          onClick={() => setActiveTab('leaderboard')}
-          className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all border border-transparent cursor-pointer",
-            activeTab === 'leaderboard'
-              ? "bg-accent-primary/10 text-accent-primary border-accent-primary/20"
-              : "text-text-secondary hover:text-text-primary"
-          )}
-        >
-          <Trophy size={14} /> Class Leaderboard
-        </button>
       </div>
 
       {/* Tab Contents */}

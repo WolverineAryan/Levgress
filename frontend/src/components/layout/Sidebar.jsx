@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   FolderKanban, 
@@ -13,7 +13,9 @@ import {
   HelpCircle,
   LogOut,
   Globe,
-  FileCheck
+  FileCheck,
+  Users,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../utils/classnames';
@@ -21,6 +23,7 @@ import { cn } from '../../utils/classnames';
 export const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -36,8 +39,10 @@ export const Sidebar = () => {
   ];
 
   const staffLinks = [
-    { to: '/staff-dashboard', label: 'Overview', icon: LayoutDashboard },
+    { to: '/staff-dashboard?tab=overview', label: 'Overview', icon: LayoutDashboard },
+    { to: '/staff-dashboard?tab=roster', label: 'Student Roster', icon: Users },
     { to: '/project-review', label: 'Projects Portfolio', icon: ClipboardList },
+    { to: '/staff-dashboard?tab=analytics', label: 'Cohort Analytics', icon: BarChart3 },
     { to: '/certificate-management', label: 'Certificates', icon: FileCheck },
     { to: '/showcase', label: 'Showcase Feed', icon: Globe },
     { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -47,6 +52,17 @@ export const Sidebar = () => {
   const inactiveStyle = 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 border-l-2 border-transparent';
 
   const links = user?.role === 'STAFF' ? staffLinks : studentLinks;
+
+  const isLinkActive = (linkTo) => {
+    const fullPath = location.pathname + location.search;
+    if (linkTo.includes('?')) {
+      if (location.pathname === '/staff-dashboard' && (!location.search || location.search === '?tab=overview') && linkTo.includes('tab=overview')) {
+        return true;
+      }
+      return fullPath === linkTo;
+    }
+    return location.pathname === linkTo;
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -63,14 +79,15 @@ export const Sidebar = () => {
       <div className="flex-1 py-6 flex flex-col space-y-1">
         {links.map((link) => {
           const Icon = link.icon;
+          const active = isLinkActive(link.to);
           return (
             <NavLink
               key={link.to}
               to={link.to}
-              className={({ isActive }) =>
+              className={
                 cn(
                   'flex items-center gap-3 px-6 py-3 text-sm font-semibold transition-all duration-200',
-                  isActive ? activeStyle : inactiveStyle
+                  active ? activeStyle : inactiveStyle
                 )
               }
             >
