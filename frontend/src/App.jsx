@@ -21,6 +21,8 @@ import { UserProfile } from './pages/UserProfile';
 import { SkillTester } from './pages/SkillTester';
 import { Settings } from './pages/Settings';
 import { ProjectsShowcase } from './pages/ProjectsShowcase';
+import { Certificates } from './pages/Certificates';
+import { CertificateManagement } from './pages/CertificateManagement';
 
 function App() {
   return (
@@ -87,6 +89,14 @@ function App() {
                 }
               />
               <Route
+                path="/certificates"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
+                    <Certificates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/leaderboard"
                 element={
                   <ProtectedRoute allowedRoles={['STUDENT', 'STAFF']}>
@@ -149,6 +159,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['STAFF']}>
                     <ProjectReview />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/certificate-management"
+                element={
+                  <ProtectedRoute allowedRoles={['STAFF']}>
+                    <CertificateManagement />
                   </ProtectedRoute>
                 }
               />

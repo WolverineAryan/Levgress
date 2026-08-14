@@ -9,7 +9,7 @@ const activityLogSchema = new mongoose.Schema(
     },
     activityType: {
       type: String,
-      enum: ['PROJECT_CREATE', 'MILESTONE_SUBMIT', 'MILESTONE_COMPLETE', 'LEVEL_UP', 'BADGE_EARN', 'STAGNATION'],
+      enum: ['PROJECT_CREATE', 'PROJECT_DELETE', 'MILESTONE_SUBMIT', 'MILESTONE_COMPLETE', 'LEVEL_UP', 'BADGE_EARN', 'STAGNATION', 'CERTIFICATE_UPLOADED', 'CERTIFICATE_REVIEWED'],
       required: true,
     },
     details: {

@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui';
-import { Trophy, Flame, BarChart3, GraduationCap } from 'lucide-react';
+import { Trophy, Flame, BarChart3, GraduationCap, User as UserIcon, Mail, Lock, Loader2 } from 'lucide-react';
 
 export const Signup = () => {
-  const { user, loginWithProvider } = useAuth();
+  const { user, register, loginWithProvider } = useAuth();
   const navigate = useNavigate();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -20,8 +26,26 @@ export const Signup = () => {
     }
   }, [user, navigate]);
 
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const handleEmailRegister = async (e) => {
+    e.preventDefault();
+    if (!name || !email || !password) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      await register(name, email, password, 'STUDENT');
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignUp = async () => {
     setError('');
@@ -223,13 +247,76 @@ export const Signup = () => {
             </div>
           )}
 
+          {/* Email & Password Signup Form */}
+          <form onSubmit={handleEmailRegister} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-secondary">Full Name</label>
+              <div className="relative">
+                <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 text-xs bg-bg-elevated border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-accent-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-secondary">Email Address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 text-xs bg-bg-elevated border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-accent-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-secondary">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                <input
+                  type="password"
+                  placeholder="At least 6 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 text-xs bg-bg-elevated border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-accent-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 text-xs font-bold shadow-md flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
+            </Button>
+          </form>
+
+          {/* OR Divider */}
+          <div className="flex items-center gap-3 my-1">
+            <div className="flex-1 h-px bg-border-subtle" />
+            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Or</span>
+            <div className="flex-1 h-px bg-border-subtle" />
+          </div>
+
           <div className="flex flex-col space-y-3.5">
             <Button
               type="button"
               variant="secondary"
               onClick={handleGoogleSignUp}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-3 border border-border-subtle bg-bg-primary hover:bg-bg-secondary transition-all py-3 rounded-2xl text-xs font-bold text-text-primary shadow-sm hover:shadow-md cursor-pointer"
+              className="w-full flex items-center justify-center gap-3 border border-border-subtle bg-bg-primary hover:bg-bg-secondary transition-all py-2.5 rounded-2xl text-xs font-bold text-text-primary shadow-sm hover:shadow-md cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

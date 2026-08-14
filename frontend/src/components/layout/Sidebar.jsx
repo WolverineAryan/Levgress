@@ -12,7 +12,8 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  Globe
+  Globe,
+  FileCheck
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../utils/classnames';
@@ -28,6 +29,7 @@ export const Sidebar = () => {
     { to: '/projects', label: 'Projects', icon: FolderKanban },
     { to: '/skills', label: 'Skills', icon: Code },
     { to: '/badges', label: 'Badges', icon: Award },
+    { to: '/certificates', label: 'Certificates', icon: FileCheck },
     { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { to: '/ai-insights', label: 'AI Insights', icon: Brain },
     { to: '/showcase', label: 'Showcase Feed', icon: Globe },
@@ -36,6 +38,7 @@ export const Sidebar = () => {
   const staffLinks = [
     { to: '/staff-dashboard', label: 'Overview', icon: LayoutDashboard },
     { to: '/project-review', label: 'Projects Portfolio', icon: ClipboardList },
+    { to: '/certificate-management', label: 'Certificates', icon: FileCheck },
     { to: '/showcase', label: 'Showcase Feed', icon: Globe },
     { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   ];

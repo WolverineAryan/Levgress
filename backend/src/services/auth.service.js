@@ -63,10 +63,26 @@ const login = async (email, password) => {
     throw new ValidationError('Please provide email and password');
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+
   // Find user and select passwordHash explicitly
-  const user = await User.findOne({ email }).select('+passwordHash');
-  if (!user || !(await user.comparePassword(password))) {
+  const user = await User.findOne({ email: cleanEmail }).select('+passwordHash');
+  if (!user) {
     throw new AuthError('Incorrect email or password');
+  }
+
+  // If user has a passwordHash, compare it
+  if (user.passwordHash) {
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new AuthError('Incorrect email or password');
+    }
+  } else {
+    // User signed up via Google/Firebase SSO without setting a local password yet.
+    // Automatically bind their passwordHash to their provided password for seamless dual JWT auth!
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(password, salt);
+    await user.save();
   }
 
   // Generate Token

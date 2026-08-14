@@ -16,6 +16,7 @@ router.delete('/skills', restrictTo('STUDENT'), studentController.deleteSkill);
 router.get('/badges', restrictTo('STUDENT'), studentController.getMyBadges);
 router.get('/ai-insights', restrictTo('STUDENT'), studentController.getAIInsights);
 router.post('/parse-resume', restrictTo('STUDENT'), studentController.parseResume);
+router.post('/confirm-resume-imports', restrictTo('STUDENT'), studentController.confirmResumeImports);
 
 // Profiles and Skill Testing
 router.get('/profile/:id', studentController.getStudentProfile);

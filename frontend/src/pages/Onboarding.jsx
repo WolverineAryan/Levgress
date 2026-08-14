@@ -156,20 +156,23 @@ export const Onboarding = () => {
   const [bio, setBio] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
+  const [fileError, setFileError] = useState('');
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     if (file.type !== 'application/pdf') {
-      setError('Please upload a PDF file only');
+      setFileError('Please upload a PDF file only');
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      setError('PDF file size should be less than 2MB');
+      setFileError('The PDF size must be less than 2 MB');
       return;
     }
+
+    setFileError('');
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -179,12 +182,52 @@ export const Onboarding = () => {
       });
     };
     reader.onerror = () => {
-      setError('Error reading file');
+      setFileError('Error reading file');
     };
     reader.readAsDataURL(file);
   };
 
   const [aiParsing, setAiParsing] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [candidateProjects, setCandidateProjects] = useState([]);
+  const [candidateSkills, setCandidateSkills] = useState([]);
+  const [selectedProjects, setSelectedProjects] = useState([]);
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [importing, setImporting] = useState(false);
+
+  const toggleProjectSelection = (proj) => {
+    if (selectedProjects.some(p => p.title === proj.title)) {
+      setSelectedProjects(selectedProjects.filter(p => p.title !== proj.title));
+    } else {
+      setSelectedProjects([...selectedProjects, proj]);
+    }
+  };
+
+  const toggleSkillSelection = (skillName) => {
+    if (selectedSkills.includes(skillName)) {
+      setSelectedSkills(selectedSkills.filter(s => s !== skillName));
+    } else {
+      setSelectedSkills([...selectedSkills, skillName]);
+    }
+  };
+
+  const handleConfirmImports = async () => {
+    setImporting(true);
+    try {
+      const res = await api.post('/students/confirm-resume-imports', {
+        projects: selectedProjects,
+        skills: selectedSkills,
+      });
+      const { createdProjects, addedSkills } = res.data.data;
+      alert(`Imported ${createdProjects?.length || 0} project(s) and ${addedSkills?.length || 0} skill(s) to your profile!`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to import selected items.');
+    } finally {
+      setImporting(false);
+      setImportModalOpen(false);
+    }
+  };
 
   const handleAiResumeFill = async () => {
     if (!resumeFile || !resumeFile.fileData) {
@@ -200,9 +243,9 @@ export const Onboarding = () => {
         fileName: resumeFile.fileName,
       });
 
-      const { resumeUrl: uploadedUrl, parsedDetails } = res.data.data;
+      const { resumeUrl: uploadedUrl, parsedDetails, candidateProjects: cProjects, candidateSkills: cSkills } = res.data.data;
 
-      // Fill form values!
+      // Fill profile form values
       if (parsedDetails.name && parsedDetails.name !== 'Full Name') {
         setName(parsedDetails.name);
       }
@@ -218,11 +261,20 @@ export const Onboarding = () => {
       if (parsedDetails.portfolioUrl) {
         setPortfolioUrl(parsedDetails.portfolioUrl);
       }
-      if (uploadedUrl) {
+      if (uploadedUrl && (uploadedUrl.startsWith('http://') || uploadedUrl.startsWith('https://'))) {
         setResumeUrl(uploadedUrl);
       }
 
-      alert('AI has successfully parsed your resume and filled the details!');
+      // If projects or skills were extracted, prompt user with confirmation modal
+      if ((cProjects && cProjects.length > 0) || (cSkills && cSkills.length > 0)) {
+        setCandidateProjects(cProjects || []);
+        setCandidateSkills(cSkills || []);
+        setSelectedProjects(cProjects || []);
+        setSelectedSkills(cSkills || []);
+        setImportModalOpen(true);
+      } else {
+        alert('AI has successfully parsed your resume details!');
+      }
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || 'Failed to parse resume with AI');
@@ -778,6 +830,52 @@ export const Onboarding = () => {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Upload Resume (Optional Auto-fill) */}
+                  <div className="relative bg-accent-primary/5 border border-accent-primary/40 rounded-xl p-3 flex flex-col gap-2 shadow-sm shadow-accent-primary/10 mt-2">
+                    <div className="absolute -top-2.5 right-4 bg-accent-primary text-bg-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-md animate-pulse">
+                      Fast Setup
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-text-secondary">Upload Resume PDF (Optional)</span>
+                      {resumeFile && (
+                        <span className="text-[10px] text-status-success font-medium max-w-[200px] truncate">
+                          {resumeFile.fileName}
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleFileChange}
+                      className="text-[11px] text-text-muted file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20 file:cursor-pointer"
+                    />
+                    {fileError && (
+                      <span className="text-[10px] font-bold text-status-danger px-1">
+                        {fileError}
+                      </span>
+                    )}
+                    {resumeFile && (
+                      <button
+                        type="button"
+                        disabled={aiParsing}
+                        onClick={handleAiResumeFill}
+                        className="w-full flex items-center justify-center gap-1.5 mt-2 py-1.5 px-3 bg-accent-primary/10 hover:bg-accent-primary/20 text-accent-primary rounded-lg text-[10px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        {aiParsing ? (
+                          <>
+                            <SpinnerIcon className="w-3.5 h-3.5 animate-spin" />
+                            <span>Parsing Resume Content...</span>
+                          </>
+                        ) : (
+                          <>
+                            <SparklesIcon size={14} className="text-accent-primary animate-pulse" />
+                            <span>AI Auto-fill Details from Resume</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
                   {/* Social links */}
                   <div className="grid grid-cols-1 gap-2.5">
                     <div className="relative">
@@ -825,49 +923,14 @@ export const Onboarding = () => {
                       </div>
                       <input
                         type="url"
-                        placeholder="Resume Link URL (Optional)"
+                        placeholder={resumeFile ? "Disabled (Resume PDF Uploaded)" : "Resume Link URL (Optional)"}
                         value={resumeUrl}
                         onChange={(e) => setResumeUrl(e.target.value)}
-                        className="w-full bg-bg-card border border-border-subtle focus:border-accent-primary rounded-xl pl-10 pr-4 py-2 text-xs text-text-primary placeholder:text-text-muted outline-none transition-all"
+                        disabled={!!resumeFile}
+                        className={`w-full bg-bg-card border border-border-subtle focus:border-accent-primary rounded-xl pl-10 pr-4 py-2 text-xs text-text-primary placeholder:text-text-muted outline-none transition-all ${resumeFile ? 'opacity-50 cursor-not-allowed bg-bg-secondary' : ''}`}
                       />
                     </div>
 
-                    <div className="relative bg-bg-card border border-border-subtle rounded-xl p-3 flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-text-secondary">Upload Resume PDF (Optional)</span>
-                        {resumeFile && (
-                          <span className="text-[10px] text-status-success font-medium max-w-[200px] truncate">
-                            {resumeFile.fileName}
-                          </span>
-                        )}
-                      </div>
-                      <input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={handleFileChange}
-                        className="text-[11px] text-text-muted file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20 file:cursor-pointer"
-                      />
-                      {resumeFile && (
-                        <button
-                          type="button"
-                          disabled={aiParsing}
-                          onClick={handleAiResumeFill}
-                          className="w-full flex items-center justify-center gap-1.5 mt-2 py-1.5 px-3 bg-accent-primary/10 hover:bg-accent-primary/20 text-accent-primary rounded-lg text-[10px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          {aiParsing ? (
-                            <>
-                              <SpinnerIcon className="w-3.5 h-3.5 animate-spin" />
-                              <span>Parsing Resume Content...</span>
-                            </>
-                          ) : (
-                            <>
-                              <SparklesIcon size={14} className="text-accent-primary animate-pulse" />
-                              <span>AI Auto-fill Details from Resume</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
                   </div>
 
                   {/* Bio */}
@@ -920,6 +983,132 @@ export const Onboarding = () => {
           </AnimatePresence>
         </form>
       </div>
+      {/* Resume Import Confirmation Modal */}
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-bg-card border border-border-subtle rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-5 h-5 text-accent-primary animate-pulse" />
+                <h3 className="text-lg font-extrabold text-text-primary">Confirm Resume Imports</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImportModalOpen(false)}
+                className="text-text-muted hover:text-text-primary text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-text-muted">
+              Select which projects and skills extracted from your resume you would like to import into your profile database.
+            </p>
+
+            {/* Extracted Projects */}
+            {candidateProjects.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">
+                  Extracted Projects ({candidateProjects.length})
+                </h4>
+                <div className="space-y-2">
+                  {candidateProjects.map((proj, idx) => {
+                    const isSelected = selectedProjects.some(p => p.title === proj.title);
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => toggleProjectSelection(proj)}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                          isSelected
+                            ? 'bg-accent-primary/10 border-accent-primary/40'
+                            : 'bg-bg-secondary border-border-subtle opacity-60'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="mt-0.5 accent-accent-primary"
+                        />
+                        <div className="flex-1 text-left">
+                          <h5 className="text-xs font-bold text-text-primary">{proj.title}</h5>
+                          {proj.description && (
+                            <p className="text-[11px] text-text-muted line-clamp-2 mt-0.5">{proj.description}</p>
+                          )}
+                          {proj.githubUrl && (
+                            <span className="text-[10px] text-accent-primary truncate block mt-1">
+                              {proj.githubUrl}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Matched Skills */}
+            {candidateSkills.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">
+                  Matched Database Skills ({candidateSkills.length})
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {candidateSkills.map((skillName, idx) => {
+                    const isSelected = selectedSkills.includes(skillName);
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => toggleSkillSelection(skillName)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                          isSelected
+                            ? 'bg-accent-primary text-bg-primary border-accent-primary'
+                            : 'bg-bg-secondary text-text-muted border-border-subtle hover:text-text-primary'
+                        }`}
+                      >
+                        <span>{skillName}</span>
+                        <span>{isSelected ? '✓' : '+'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-3 border-t border-border-subtle">
+              <button
+                type="button"
+                onClick={() => setImportModalOpen(false)}
+                className="flex-1 py-2.5 px-4 bg-bg-secondary hover:bg-border-subtle text-text-secondary text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Skip Importing
+              </button>
+              <button
+                type="button"
+                disabled={importing || (selectedProjects.length === 0 && selectedSkills.length === 0)}
+                onClick={handleConfirmImports}
+                className="flex-1 py-2.5 px-4 bg-accent-primary hover:bg-accent-hover text-bg-primary text-xs font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {importing ? (
+                  <>
+                    <SpinnerIcon size={14} className="animate-spin" />
+                    <span>Importing...</span>
+                  </>
+                ) : (
+                  <span>Import Selected ({selectedProjects.length + selectedSkills.length})</span>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

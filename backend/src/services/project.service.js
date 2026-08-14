@@ -100,7 +100,32 @@ const getProjectById = async (projectId, requestingUserId = null, requestingUser
     throw new ForbiddenError('You do not have permission to access this project');
   }
 
-  const milestones = await Milestone.find({ project: projectId }).sort({ index: 1 });
+  let milestones = await Milestone.find({ project: projectId }).sort({ index: 1 });
+
+  // Auto-seed milestones if project currently has none
+  if (!milestones || milestones.length === 0) {
+    const defaultMilestones = DEFAULT_MILESTONES.map((m) => ({
+      project: project._id,
+      index: m.index,
+      title: m.title,
+      description: m.description,
+      status: m.index === 1 ? 'ACTIVE' : 'LOCKED',
+    }));
+    await Milestone.insertMany(defaultMilestones);
+    milestones = await Milestone.find({ project: projectId }).sort({ index: 1 });
+  }
+
+  // Auto-sync project status with milestone completion
+  const milestone5 = milestones.find((m) => m.index === 5);
+  const isM5Completed = milestone5 && milestone5.status === 'COMPLETED';
+
+  if (!isM5Completed && project.status === 'COMPLETED') {
+    project.status = 'IN_PROGRESS';
+    await project.save();
+  } else if (isM5Completed && project.status !== 'COMPLETED') {
+    project.status = 'COMPLETED';
+    await project.save();
+  }
 
   return {
     project,

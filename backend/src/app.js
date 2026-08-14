@@ -14,6 +14,7 @@ const milestoneRoutes = require('./routes/milestone.routes');
 const studentRoutes = require('./routes/student.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const postRoutes = require('./routes/post.routes');
+const certificateRoutes = require('./routes/certificate.routes');
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use('/api/milestones', milestoneRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/certificates', certificateRoutes);
 
 // Fallback for unhandled routes
 app.all('*', (req, res, next) => {

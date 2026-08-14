@@ -14,7 +14,8 @@ const { getRealisticQuiz, shuffleQuiz } = require('../utils/mockQuizzes');
 const QuizQuestion = require('../models/QuizQuestion');
 const MasterSkill = require('../models/MasterSkill');
 
-const pdfParse = require('pdf-parse');
+const pdfModule = require('pdf-parse');
+const PDFParse = pdfModule.PDFParse || pdfModule;
 const supabaseService = require('../services/supabase.service');
 const aiResumeService = require('../services/aiResume.service');
 
@@ -959,7 +960,7 @@ const parseResume = asyncHandler(async (req, res) => {
     throw new ValidationError('Resume data (Base64) is required');
   }
 
-  // 1. Parse PDF text
+  // 1. Parse PDF text (two-pass: clean text + link annotations)
   let extractedText = '';
   try {
     const matches = resumeData.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
@@ -969,8 +970,44 @@ const parseResume = asyncHandler(async (req, res) => {
     const base64String = matches[2];
     const buffer = Buffer.from(base64String, 'base64');
     
-    const parsedPdf = await pdfParse(buffer);
-    extractedText = parsedPdf.text || '';
+    if (typeof PDFParse === 'function' && PDFParse.prototype && PDFParse.prototype.getText) {
+      const parser = new PDFParse({ data: buffer });
+
+      // Pass 1: Extract clean text without hyperlink markdown injection
+      const parsedPdf = await parser.getText();
+      extractedText = parsedPdf.text || '';
+
+      // Pass 2: Extract ALL link annotations via getPageLinks()
+      try {
+        const doc = await parser.load();
+        const allLinks = [];
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const pageLinks = await parser.getPageLinks(page);
+          if (pageLinks && pageLinks.links) {
+            pageLinks.links.forEach((link) => {
+              if (link.url) {
+                allLinks.push({ text: link.text || '', url: link.url });
+              }
+            });
+          }
+        }
+        if (allLinks.length > 0) {
+          extractedText += '\n\n--- EMBEDDED PDF LINKS ---\n';
+          allLinks.forEach((link) => {
+            extractedText += `${link.text || 'Link'}: ${link.url}\n`;
+          });
+        }
+      } catch (linkErr) {
+        console.error('[PDF Parser] Error extracting link annotations:', linkErr.message);
+      }
+
+      await parser.destroy();
+    } else if (typeof PDFParse === 'function') {
+      // Fallback for older pdf-parse versions
+      const parsedPdf = await PDFParse(buffer);
+      extractedText = parsedPdf.text || '';
+    }
   } catch (err) {
     console.error('Failed to parse PDF text content:', err);
     throw new ValidationError('Could not extract text from the PDF file. Please ensure it is a text-based PDF.');
@@ -979,6 +1016,9 @@ const parseResume = asyncHandler(async (req, res) => {
   if (!extractedText || !extractedText.trim()) {
     throw new ValidationError('No readable text found in the uploaded resume.');
   }
+
+  console.log('[PDF Parser] Extracted text length:', extractedText.length);
+  console.log('[PDF Parser] Text preview:', extractedText.slice(0, 400));
 
   // 2. Query AI model to parse extracted text
   const parsedDetails = await aiResumeService.parseResumeText(extractedText);
@@ -1026,12 +1066,139 @@ const parseResume = asyncHandler(async (req, res) => {
 
   const updatedUser = await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
 
+  // Match extracted skills/technologies against MasterSkill collection (without auto-saving to DB)
+  const candidateMatchedSkills = [];
+  try {
+    const masterSkills = await MasterSkill.find();
+    const masterMap = new Map(masterSkills.map(s => [s.name.toLowerCase(), s]));
+
+    const candidateSkillNames = new Set();
+    if (Array.isArray(parsedDetails.skills)) {
+      parsedDetails.skills.forEach(s => {
+        if (s && s.name) candidateSkillNames.add(s.name.trim());
+      });
+    }
+    if (Array.isArray(parsedDetails.techStack)) {
+      parsedDetails.techStack.forEach(t => {
+        if (t) candidateSkillNames.add(String(t).trim());
+      });
+    }
+
+    for (const candidateName of candidateSkillNames) {
+      const lower = candidateName.toLowerCase();
+      const masterSkill = masterMap.get(lower);
+      if (masterSkill) {
+        candidateMatchedSkills.push(masterSkill.name);
+      }
+    }
+  } catch (skillErr) {
+    console.error('[PDF Parser] Error finding MasterSkills:', skillErr);
+  }
+
   res.status(200).json({
     status: 'success',
     data: {
       resumeUrl: updatedUser.resumeUrl,
       parsedDetails,
       user: updatedUser,
+      candidateProjects: parsedDetails.projects || [],
+      candidateSkills: candidateMatchedSkills,
+    },
+  });
+});
+
+const confirmResumeImports = asyncHandler(async (req, res) => {
+  const { projects = [], skills = [] } = req.body;
+
+  const createdProjects = [];
+  if (Array.isArray(projects) && projects.length > 0) {
+    for (const proj of projects) {
+      if (!proj || !proj.title) continue;
+      try {
+        const existing = await Project.findOne({
+          student: req.user._id,
+          title: { $regex: new RegExp(`^${proj.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+        });
+        if (!existing) {
+          const newProj = await Project.create({
+            student: req.user._id,
+            title: proj.title,
+            description: proj.description || `${proj.title} project from resume`,
+            githubUrl: proj.githubUrl || '',
+            liveUrl: proj.liveUrl || '',
+            techStack: proj.techStack || [],
+            status: 'IN_PROGRESS',
+            visibility: 'PUBLIC'
+          });
+
+          // Create default 5 milestone pipeline: Milestone 1 is ACTIVE, rest are LOCKED
+          const defaultMilestones = [
+            { index: 1, title: 'Project Setup & Design Planning', description: 'Set up repository and design documentation.' },
+            { index: 2, title: 'Core Backend Development', description: 'Implement database models and core API endpoints.' },
+            { index: 3, title: 'Frontend Scaffolding & Core Pages', description: 'Build user interface components and core pages.' },
+            { index: 4, title: 'API Integration & State Management', description: 'Connect frontend client to backend APIs.' },
+            { index: 5, title: 'Testing, Deployment & Documentation', description: 'Deploy project online and document features.' },
+          ].map((m) => ({
+            project: newProj._id,
+            index: m.index,
+            title: m.title,
+            description: m.description,
+            status: m.index === 1 ? 'ACTIVE' : 'LOCKED',
+          }));
+          await Milestone.insertMany(defaultMilestones);
+
+          createdProjects.push(newProj);
+        }
+      } catch (projErr) {
+        console.error('[PDF Parser] Error creating user-confirmed project:', projErr);
+      }
+    }
+  }
+
+  const addedSkills = [];
+  if (Array.isArray(skills) && skills.length > 0) {
+    try {
+      const masterSkills = await MasterSkill.find();
+      const masterMap = new Map(masterSkills.map(s => [s.name.toLowerCase(), s]));
+
+      let stats = await StudentStats.findOne({ user: req.user._id });
+      if (!stats) {
+        stats = await StudentStats.create({ user: req.user._id, skills: [] });
+      }
+
+      const existingSkillNames = new Set(stats.skills.map(s => s.name.toLowerCase()));
+
+      for (const skillName of skills) {
+        if (!skillName) continue;
+        const lower = String(skillName).trim().toLowerCase();
+        const masterSkill = masterMap.get(lower);
+        if (masterSkill && !existingSkillNames.has(lower)) {
+          stats.skills.push({
+            name: masterSkill.name,
+            category: masterSkill.category,
+            type: masterSkill.type,
+            tier: 'BASIC',
+            xp: 50,
+          });
+          existingSkillNames.add(lower);
+          addedSkills.push(masterSkill.name);
+        }
+      }
+
+      if (addedSkills.length > 0) {
+        await stats.save();
+      }
+    } catch (skillErr) {
+      console.error('[PDF Parser] Error importing user-confirmed skills:', skillErr);
+    }
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Selected resume items imported successfully',
+    data: {
+      createdProjects,
+      addedSkills,
     },
   });
 });
@@ -1051,6 +1218,7 @@ module.exports = {
   submitSkillTestResult,
   getStudentByUsername,
   parseResume,
+  confirmResumeImports,
   // Instructor endpoints
   getAllStudents,
   getStudentDetailedProfile,

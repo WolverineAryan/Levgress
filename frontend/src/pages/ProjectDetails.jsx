@@ -438,26 +438,25 @@ export const ProjectDetails = () => {
                 <>
                   <button
                     onClick={() => setActiveScreenshotIdx((prev) => (prev === 0 ? project.screenshots.length - 1 : prev - 1))}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/50 hover:bg-black/75 border border-white/10 text-white opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 transition-all cursor-pointer z-20"
-                    title="Previous Slide"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 hover:bg-accent-primary text-white border border-white/20 opacity-90 hover:opacity-100 hover:scale-110 active:scale-95 transition-all cursor-pointer z-20 shadow-xl"
+                    title="Previous Image"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setActiveScreenshotIdx((prev) => (prev === project.screenshots.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/50 hover:bg-black/75 border border-white/10 text-white opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 transition-all cursor-pointer z-20"
-                    title="Next Slide"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 hover:bg-accent-primary text-white border border-white/20 opacity-90 hover:opacity-100 hover:scale-110 active:scale-95 transition-all cursor-pointer z-20 shadow-xl"
+                    title="Next Image"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                 </>
               )}
 
               {/* Bottom Caption & Delete Overlay */}
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 flex items-center justify-between text-xs text-text-primary">
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 flex items-center justify-between text-xs text-text-primary z-20">
                 <div className="flex flex-col">
-                  <span className="font-semibold truncate max-w-[250px]">{project.screenshots[activeScreenshotIdx]?.fileName}</span>
-                  <span className="text-[9px] text-white/50 mt-0.5">
+                  <span className="text-[10px] font-bold text-white/70">
                     Image {activeScreenshotIdx + 1} of {project.screenshots.length}
                   </span>
                 </div>
@@ -476,20 +475,36 @@ export const ProjectDetails = () => {
 
             {/* Thumbnails list navigation bar */}
             {project.screenshots.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1.5 pt-1.5 scrollbar-thin select-none justify-center">
-                {project.screenshots.map((s, idx) => (
-                  <button
-                    key={s._id}
-                    onClick={() => setActiveScreenshotIdx(idx)}
-                    className={`h-14 w-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all p-0.5 bg-black/20 hover:brightness-110 cursor-pointer ${
-                      activeScreenshotIdx === idx
-                        ? 'border-accent-primary scale-[1.03] shadow-md shadow-accent-primary/10'
-                        : 'border-border-subtle opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={s.fileData} alt="" className="w-full h-full object-cover rounded-lg" />
-                  </button>
-                ))}
+              <div className="flex items-center justify-center gap-3 pb-1.5 pt-1.5 select-none">
+                <button
+                  onClick={() => setActiveScreenshotIdx((prev) => (prev === 0 ? project.screenshots.length - 1 : prev - 1))}
+                  className="p-2 rounded-xl bg-bg-card border border-border-subtle hover:border-accent-primary text-text-secondary hover:text-accent-primary transition-all cursor-pointer"
+                  title="Previous Image"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="flex gap-2 overflow-x-auto scrollbar-thin max-w-[80%] py-1">
+                  {project.screenshots.map((s, idx) => (
+                    <button
+                      key={s._id || idx}
+                      onClick={() => setActiveScreenshotIdx(idx)}
+                      className={`h-14 w-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all p-0.5 bg-black/20 hover:brightness-110 cursor-pointer ${
+                        activeScreenshotIdx === idx
+                          ? 'border-accent-primary scale-[1.03] shadow-md shadow-accent-primary/10'
+                          : 'border-border-subtle opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={s.fileData} alt="" className="w-full h-full object-cover rounded-lg" />
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setActiveScreenshotIdx((prev) => (prev === project.screenshots.length - 1 ? 0 : prev + 1))}
+                  className="p-2 rounded-xl bg-bg-card border border-border-subtle hover:border-accent-primary text-text-secondary hover:text-accent-primary transition-all cursor-pointer"
+                  title="Next Image"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             )}
           </div>

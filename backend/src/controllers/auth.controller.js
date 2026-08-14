@@ -3,11 +3,20 @@ const asyncHandler = require('../middleware/asyncHandler');
 const { ForbiddenError } = require('../utils/AppError');
 
 const register = asyncHandler(async (req, res) => {
-  throw new ForbiddenError('Local registration is disabled. Please use Google or GitHub sign-up.');
+  const result = await authService.register(req.body);
+  res.status(201).json({
+    status: 'success',
+    data: result,
+  });
 });
 
 const login = asyncHandler(async (req, res) => {
-  throw new ForbiddenError('Local login is disabled. Please use Google or GitHub sign-in.');
+  const { email, password } = req.body;
+  const result = await authService.login(email, password);
+  res.status(200).json({
+    status: 'success',
+    data: result,
+  });
 });
 
 const getMe = asyncHandler(async (req, res) => {

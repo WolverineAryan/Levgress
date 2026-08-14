@@ -38,3 +38,4 @@ process.on('SIGTERM', () => {
     logger.info('💥 Process terminated!');
   });
 });
+// Trigger nodemon restart - updated auth controller

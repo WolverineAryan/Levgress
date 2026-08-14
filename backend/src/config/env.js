@@ -21,6 +21,10 @@ const config = {
   groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
   supabaseUrl: process.env.SUPABASE_URL || '',
   supabaseKey: process.env.SUPABASE_KEY || '',
+  emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  emailPort: process.env.EMAIL_PORT || 587,
+  emailUser: process.env.EMAIL_USER || '',
+  emailPass: process.env.EMAIL_PASS || '',
 };
 
 if (!process.env.JWT_SECRET) {
