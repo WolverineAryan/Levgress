@@ -347,7 +347,7 @@ export const ProjectsShowcase = () => {
                       </div>
                     </div>
 
-                    {(isAuthor || (user && user.role === 'STAFF')) && (
+                    {isAuthor && (
                       <button 
                         onClick={() => handleDeletePost(post._id)}
                         className="text-text-muted hover:text-status-danger transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-status-danger/10 border-0 bg-transparent"

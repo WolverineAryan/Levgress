@@ -38,4 +38,4 @@ process.on('SIGTERM', () => {
     logger.info('💥 Process terminated!');
   });
 });
-// Trigger nodemon restart - updated auth controller
+// Trigger nodemon restart - Active NVIDIA NIM model set to meta/llama-3.1-70b-instruct

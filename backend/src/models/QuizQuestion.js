@@ -33,6 +33,10 @@ const quizQuestionSchema = new mongoose.Schema(
       min: 0,
       max: 3,
     },
+    explanation: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

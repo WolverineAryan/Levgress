@@ -255,90 +255,93 @@ export const Layout = () => {
       </AnimatePresence>
 
       {/* Level Up Screen Animation Overlay */}
-      {showLevelUp && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 overflow-hidden select-none animate-in fade-in duration-300">
-          <style>{`
-            @keyframes confetti-fall {
-              0% { transform: translateY(-10%) rotate(0deg); opacity: 1; }
-              100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-            }
-            @keyframes pulse-glow {
-              0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5)); }
-              50% { transform: scale(1.06); filter: drop-shadow(0 0 45px rgba(139, 92, 246, 0.95)); }
-            }
-            @keyframes bounce-scale {
-              0% { transform: scale(0.3); opacity: 0; }
-              50% { transform: scale(1.1); }
-              70% { transform: scale(0.9); }
-              100% { transform: scale(1); opacity: 1; }
-            }
-            .confetti-piece {
-              position: absolute;
-              top: -5%;
-              width: 10px;
-              height: 20px;
-              border-radius: 4px;
-              animation: confetti-fall 4.5s linear infinite;
-            }
-            .level-glow-circle {
-              animation: pulse-glow 3s ease-in-out infinite;
-            }
-            .pop-in-card {
-              animation: bounce-scale 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            }
-          `}</style>
-          
-          {/* Confetti Rain */}
-          {confettiPieces}
+      <AnimatePresence>
+        {showLevelUp && (
+          <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center p-4 overflow-hidden select-none">
+            <style>{`
+              @keyframes confetti-fall {
+                0% { transform: translateY(-10%) rotate(0deg); opacity: 1; }
+                100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+              }
+              .confetti-piece {
+                position: absolute;
+                top: -5%;
+                width: 8px;
+                height: 16px;
+                border-radius: 3px;
+                animation: confetti-fall 4s linear infinite;
+              }
+            `}</style>
+            
+            {/* Confetti Rain */}
+            {confettiPieces}
 
-          <div className="pop-in-card flex flex-col items-center max-w-sm w-full bg-bg-secondary/60 border border-accent-primary/25 rounded-3xl p-8 backdrop-blur-lg shadow-2xl text-center space-y-6 relative">
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-accent-primary/20 rounded-full blur-[60px] pointer-events-none" />
-
-            <div className="level-glow-circle w-28 h-28 rounded-full bg-gradient-to-tr from-accent-primary via-accent-hover to-purple-500 p-[3px] flex items-center justify-center shadow-lg relative">
-              <div className="w-full h-full rounded-full bg-bg-primary flex flex-col items-center justify-center">
-                <span className="text-[10px] font-black uppercase text-accent-primary tracking-widest leading-none">LEVEL</span>
-                <span className="text-4xl font-black text-text-primary tracking-tighter mt-1">{celebratedLevel}</span>
-              </div>
-              <div className="absolute -top-2 -right-2 p-1.5 bg-yellow-500 rounded-lg text-black animate-bounce">
-                <Award className="w-5 h-5 fill-black" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-accent-primary via-white to-purple-400 uppercase">
-                LEVEL UP!
-              </h2>
-              <p className="text-xs text-text-secondary leading-relaxed max-w-[280px] mx-auto">
-                Congratulations! You have reached Level <span className="font-extrabold text-accent-primary">{celebratedLevel}</span>. Your dedication and learning streaks are paying off!
-              </p>
-            </div>
-
-            <div className="w-full p-4 bg-bg-primary/40 border border-border-subtle rounded-2xl flex items-center justify-around text-xs">
-              <div className="flex flex-col items-center">
-                <span className="text-text-muted font-bold text-[9px] uppercase">XP Goal</span>
-                <span className="font-extrabold text-text-primary mt-1">+{celebratedLevel * 100} XP</span>
-              </div>
-              <div className="h-8 w-[1px] bg-border-subtle" />
-              <div className="flex flex-col items-center">
-                <span className="text-text-muted font-bold text-[9px] uppercase">Streaks</span>
-                <span className="font-extrabold text-text-primary mt-1">{streakDays} Days</span>
-              </div>
-              <div className="h-8 w-[1px] bg-border-subtle" />
-              <div className="flex flex-col items-center">
-                <span className="text-text-muted font-bold text-[9px] uppercase">Badges</span>
-                <span className="font-extrabold text-text-primary mt-1">{badgesCount} Earned</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowLevelUp(false)}
-              className="w-full h-11 bg-gradient-to-r from-accent-primary to-purple-600 hover:from-accent-hover hover:to-purple-500 text-bg-primary font-black rounded-xl cursor-pointer text-xs uppercase tracking-widest shadow-lg shadow-accent-primary/10 hover:shadow-accent-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 260 }}
+              className="flex flex-col items-center max-w-md w-full bg-bg-card/90 border border-accent-primary/40 rounded-3xl p-8 backdrop-blur-2xl shadow-[0_0_80px_rgba(192,133,82,0.25)] text-center space-y-6 relative overflow-hidden"
             >
-              Continue Journey
-            </button>
+              {/* Background Glow Burst */}
+              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-accent-primary/25 rounded-full blur-[80px] pointer-events-none" />
+
+              <div className="relative">
+                <motion.div
+                  animate={{ scale: [1, 1.08, 1], rotate: [0, 5, -5, 0] }}
+                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                  className="w-32 h-32 rounded-full bg-gradient-to-tr from-accent-primary via-amber-400 to-purple-600 p-[3px] flex items-center justify-center shadow-2xl relative"
+                >
+                  <div className="w-full h-full rounded-full bg-bg-primary flex flex-col items-center justify-center border border-border-subtle">
+                    <span className="text-[10px] font-black uppercase text-accent-primary tracking-widest leading-none">LEVEL</span>
+                    <span className="text-5xl font-black text-text-primary tracking-tighter mt-1">{celebratedLevel}</span>
+                  </div>
+                </motion.div>
+                <div className="absolute -top-1 -right-1 p-2 bg-amber-400 rounded-xl text-black shadow-lg animate-bounce">
+                  <Award className="w-5 h-5 fill-black" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-accent-primary/10 text-accent-primary border border-accent-primary/25 inline-flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {celebratedLevel >= 20 ? 'Master Architect' : celebratedLevel >= 10 ? 'Senior Engineer' : celebratedLevel >= 5 ? 'Rising Developer' : 'Apprentice'}
+                </span>
+                <h2 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-accent-primary via-amber-300 to-purple-400 uppercase">
+                  LEVEL UP!
+                </h2>
+                <p className="text-xs text-text-secondary leading-relaxed max-w-[300px] mx-auto">
+                  Congratulations! You have promoted to Level <span className="font-extrabold text-accent-primary">{celebratedLevel}</span>. Your active learning streaks and completed milestones are paying off!
+                </p>
+              </div>
+
+              <div className="w-full p-4 bg-bg-secondary/60 border border-border-subtle rounded-2xl flex items-center justify-around text-xs">
+                <div className="flex flex-col items-center">
+                  <span className="text-text-muted font-bold text-[9px] uppercase tracking-wider">Level Target</span>
+                  <span className="font-extrabold text-text-primary mt-1 text-sm">+{celebratedLevel * 150} XP</span>
+                </div>
+                <div className="h-8 w-[1px] bg-border-subtle" />
+                <div className="flex flex-col items-center">
+                  <span className="text-text-muted font-bold text-[9px] uppercase tracking-wider">Streak</span>
+                  <span className="font-extrabold text-status-warning mt-1 text-sm">{streakDays} Days 🔥</span>
+                </div>
+                <div className="h-8 w-[1px] bg-border-subtle" />
+                <div className="flex flex-col items-center">
+                  <span className="text-text-muted font-bold text-[9px] uppercase tracking-wider">Badges</span>
+                  <span className="font-extrabold text-accent-primary mt-1 text-sm">{badgesCount} Unlocked</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowLevelUp(false)}
+                className="w-full h-12 bg-gradient-to-r from-accent-primary via-amber-500 to-purple-600 hover:from-accent-hover hover:to-purple-500 text-bg-primary font-black rounded-xl cursor-pointer text-xs uppercase tracking-widest shadow-xl shadow-accent-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                Claim Rewards & Continue
+              </button>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

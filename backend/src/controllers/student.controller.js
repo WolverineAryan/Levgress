@@ -18,6 +18,7 @@ const pdfModule = require('pdf-parse');
 const PDFParse = pdfModule.PDFParse || pdfModule;
 const supabaseService = require('../services/supabase.service');
 const aiResumeService = require('../services/aiResume.service');
+const aiQuizService = require('../services/aiQuiz.service');
 
 const populateStatsSkills = async (skills) => {
   const masterSkills = await MasterSkill.find();
@@ -40,13 +41,16 @@ const populateStatsSkills = async (skills) => {
 const getStudentDashboard = asyncHandler(async (req, res) => {
   const studentId = req.user._id;
 
+  // Real-time streak update
+  await gamificationService.updateStreak(studentId);
+
   let stats = await StudentStats.findOne({ user: studentId });
   if (!stats) {
     stats = await StudentStats.create({
       user: studentId,
       xp: 0,
       level: 1,
-      streak: 0,
+      streak: 1,
       skills: [],
     });
   }
@@ -525,41 +529,32 @@ const generateSkillQuestions = asyncHandler(async (req, res) => {
     throw new ValidationError('Invalid tier specified');
   }
 
-  // 1. Try to serve from the database cache first
-  const regex = new RegExp(`^${skillName}$`, 'i');
-  const dbQuestions = await QuizQuestion.find({ skillName: { $regex: regex }, tier });
+  const regex = new RegExp(`^${skillName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
 
-  if (dbQuestions.length >= 3) {
-    console.log(`[Quiz] Loaded ${dbQuestions.length} questions for ${skillName} (${tier}) from DB.`);
-    const shuffled = shuffleQuiz(dbQuestions);
-    return res.status(200).json({
-      status: 'success',
-      data: { questions: shuffled.slice(0, 3) },
-    });
-  }
+  // Purge any stale cache and generate 10 fresh dynamic Groq AI questions every test start
+  await QuizQuestion.deleteMany({ skillName: { $regex: regex }, tier });
 
-  // 2. Generate from mock dataset and cache in DB
-  console.log(`[Quiz] DB miss for ${skillName} (${tier}). Loading from mock dataset and caching.`);
-  const mockQuestions = getRealisticQuiz(skillName, tier);
+  console.log(`[Quiz] Generating 10 fresh Groq AI questions for ${skillName} (${tier})...`);
+  const aiQuestions = await aiQuizService.generateTenAIQuestions(skillName, tier);
 
-  const docs = mockQuestions.map((q) => ({
+  const docs = aiQuestions.map((q) => ({
     skillName,
     tier,
     question: q.question,
     options: q.options,
     answerIndex: q.answerIndex,
+    explanation: q.explanation || '',
   }));
 
   try {
     await QuizQuestion.insertMany(docs);
-    console.log(`[Quiz] Cached ${docs.length} mock questions for ${skillName} (${tier}).`);
   } catch (err) {
-    console.error('[Quiz] Error caching mock questions to DB:', err.message);
+    console.error('[Quiz] Error caching Groq AI questions to DB:', err.message);
   }
 
   return res.status(200).json({
     status: 'success',
-    data: { questions: shuffleQuiz(mockQuestions).slice(0, 3) },
+    data: { questions: docs },
   });
 });
 
@@ -593,43 +588,120 @@ const submitSkillTestResult = asyncHandler(async (req, res) => {
 });
 
 const getMockQuestions = (skillName, tier) => {
-  const realistic = getRealisticQuiz(skillName, tier);
-  if (realistic) {
-    return realistic;
-  }
-
-  return [
+  const questions = [
     {
-      question: `What is a primary concept or foundational feature of ${skillName} at the ${tier} level?`,
+      question: `What is the primary role of ${skillName} in modern ${tier} engineering workflows?`,
       options: [
-        `Option A: Core feature and basic usage of ${skillName}`,
-        `Option B: Secondary syntax details`,
-        `Option C: Advanced configuration framework`,
-        `Option D: Legacy deprecated behaviors`
+        `Providing core architecture and standardized implementation patterns for ${skillName}`,
+        `Bypassing data validation layers`,
+        `Hardcoding static global variables`,
+        `Disabling error logging and exception traps`
       ],
-      answerIndex: 0
+      answerIndex: 0,
+      explanation: `Providing standard architecture and patterns is the foundational goal of ${skillName} in production workflows.`
     },
     {
-      question: `Which of the following describes a typical troubleshooting scenario for ${skillName} (${tier})?`,
+      question: `Which convention represents best practices for handling asynchronous operations or data flow in ${skillName}?`,
       options: [
-        `Incorrect scoping parameters`,
-        `Standard default setup (Recommended)`,
-        `Third-party extensions override`,
-        `Operating system memory leaks`
+        `Executing blocking loops on main single threads`,
+        `Utilizing non-blocking async/await or event handling patterns`,
+        `Ignoring promise rejections`,
+        `Synchronously reading files in tight UI render loops`
       ],
-      answerIndex: 1
+      answerIndex: 1,
+      explanation: `Non-blocking asynchronous execution keeps applications responsive and prevents main thread deadlocks.`
     },
     {
-      question: `What is the recommended best practice for optimizing performance in ${skillName} during ${tier} tasks?`,
+      question: `When debugging state or execution bugs in ${skillName} (${tier}), which approach is most effective?`,
       options: [
-        `Compile all modules synchronously`,
-        `Avoid unnecessary recalculations and caches`,
-        `Use modular imports and profile bottlenecks`,
-        `Disable security scanning controls`
+        `Deleting failing unit test cases`,
+        `Inspecting full stack traces, log outputs, and verifying data immutability`,
+        `Returning dummy mock data silently on errors`,
+        `Swallowing exceptions with empty catch blocks`
       ],
-      answerIndex: 2
+      answerIndex: 1,
+      explanation: `Inspecting empirical log traces and ensuring immutable state management isolates the exact root cause of bugs.`
+    },
+    {
+      question: `What is a key security consideration when working with ${skillName}?`,
+      options: [
+        `Sanitizing user inputs to prevent injection vulnerabilities`,
+        `Storing API keys directly in public frontend code repositories`,
+        `Disabling CORS policies completely`,
+        `Exposing raw database credentials via URL query parameters`
+      ],
+      answerIndex: 0,
+      explanation: `Sanitizing and validating incoming user data prevents command, SQL, and script injection attacks.`
+    },
+    {
+      question: `How does modular component or function design benefit ${skillName} codebases at the ${tier} level?`,
+      options: [
+        `Increases bundle size without benefit`,
+        `Enhances code reusability, testability, and separation of concerns`,
+        `Makes unit testing impossible`,
+        `Requires rewriting logic for every new feature`
+      ],
+      answerIndex: 1,
+      explanation: `Modular architecture enforces clean boundaries, making individual units easily testable and reusable.`
+    },
+    {
+      question: `Which tool or mechanism is typically used for managing dependencies and packages in ${skillName}?`,
+      options: [
+        `Package managers (e.g., npm, yarn, pip)`,
+        `Copying raw source files manually into node_modules`,
+        `Global OS registry keys`,
+        `System environment variable strings only`
+      ],
+      answerIndex: 0,
+      explanation: `Package managers resolve, lock, and manage third-party library dependencies deterministically.`
+    },
+    {
+      question: `What is the recommended strategy for managing state in ${skillName} applications?`,
+      options: [
+        `Mutating global DOM elements directly`,
+        `Keeping state localized or using predictable uni-directional data stores`,
+        `Storing draft state directly in browser window global objects`,
+        `Overwriting component props dynamically at runtime`
+      ],
+      answerIndex: 1,
+      explanation: `Uni-directional data flow and localized state prevent race conditions and unhandled UI mutations.`
+    },
+    {
+      question: `In ${skillName} performance optimization, what does lazy loading accomplish?`,
+      options: [
+        `Defers loading of non-critical resources until needed, shrinking initial bundle size`,
+        `Loads all assets simultaneously during initial splash screen`,
+        `Increases memory consumption on client devices`,
+        `Disables browser caching`
+      ],
+      answerIndex: 0,
+      explanation: `Code-splitting and lazy loading defer bundle execution, reducing initial load latency.`
+    },
+    {
+      question: `What is the primary benefit of static type checking or strict schema validation in ${skillName}?`,
+      options: [
+        `Catches type mismatch bugs at compile-time before runtime execution`,
+        `Slows down execution speed in production`,
+        `Prevents writing object methods`,
+        `Eliminates the need for automated testing`
+      ],
+      answerIndex: 0,
+      explanation: `Strict type/schema checks catch NullPointer/TypeError crashes during compilation before hitting production.`
+    },
+    {
+      question: `What is a fundamental requirement for deploying ${skillName} applications to production?`,
+      options: [
+        `Configuring environment variables, HTTPS TLS security, and automated build verification`,
+        `Running dev servers with debug hot-reloading in production environments`,
+        `Committing local passwords into version control`,
+        `Disabling server compression and caching headers`
+      ],
+      answerIndex: 0,
+      explanation: `Production deployments require secret isolation, SSL encryption, build optimization, and CI/CD validation.`
     }
   ];
+
+  return questions;
 };
 
 

@@ -4,6 +4,10 @@ export const submitEvidence = (milestoneId, evidenceData) => {
   return api.post(`/milestones/${milestoneId}/submit`, evidenceData);
 };
 
+export const cancelSubmission = (milestoneId) => {
+  return api.post(`/milestones/${milestoneId}/cancel`);
+};
+
 export const staffApproveMilestone = (milestoneId, feedback) => {
   return api.post(`/milestones/${milestoneId}/approve`, { feedback });
 };

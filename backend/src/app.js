@@ -7,6 +7,8 @@ const config = require('./config/env');
 const errorHandler = require('./middleware/error.middleware');
 const { NotFoundError } = require('./utils/AppError');
 
+const compression = require('compression');
+
 // Import routes
 const authRoutes = require('./routes/auth.routes');
 const projectRoutes = require('./routes/project.routes');
@@ -15,11 +17,13 @@ const studentRoutes = require('./routes/student.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const postRoutes = require('./routes/post.routes');
 const certificateRoutes = require('./routes/certificate.routes');
+const announcementRoutes = require('./routes/announcement.routes');
 
 const app = express();
 
-// Security HTTP Headers
+// Security HTTP Headers & Payload Compression
 app.use(helmet());
+app.use(compression());
 
 // CORS config
 app.use(
@@ -62,6 +66,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Fallback for unhandled routes
 app.all('*', (req, res, next) => {

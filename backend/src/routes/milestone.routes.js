@@ -8,6 +8,7 @@ router.use(protect);
 
 // Student submits evidence for a milestone
 router.post('/:id/submit', restrictTo('STUDENT'), milestoneController.submitEvidence);
+router.post('/:id/cancel', restrictTo('STUDENT'), milestoneController.cancelSubmission);
 
 // Instructor manual validation/override endpoints
 router.post('/:id/approve', restrictTo('STAFF'), milestoneController.staffApproveMilestone);

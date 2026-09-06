@@ -99,6 +99,8 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+userSchema.index({ role: 1, batch: 1, department: 1 });
+
 // Method to verify password
 userSchema.methods.comparePassword = async function (password) {
   if (!this.passwordHash) return false;

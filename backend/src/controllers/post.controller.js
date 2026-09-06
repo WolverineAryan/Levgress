@@ -206,8 +206,8 @@ const deletePost = asyncHandler(async (req, res) => {
     throw new NotFoundError('Post not found');
   }
 
-  // Only the author or staff can delete the post
-  if (req.user.role !== 'STAFF' && post.author.toString() !== req.user._id.toString()) {
+  // Only the author can delete the post
+  if (post.author.toString() !== req.user._id.toString()) {
     throw new ForbiddenError('You are not authorized to delete this post');
   }
 

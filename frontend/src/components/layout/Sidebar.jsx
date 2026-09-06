@@ -15,7 +15,8 @@ import {
   Globe,
   FileCheck,
   Users,
-  BarChart3
+  BarChart3,
+  Megaphone
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../utils/classnames';
@@ -33,6 +34,7 @@ export const Sidebar = () => {
     { to: '/skills', label: 'Skills', icon: Code },
     { to: '/badges', label: 'Badges', icon: Award },
     { to: '/certificates', label: 'Certificates', icon: FileCheck },
+    { to: '/announcements', label: 'Placements', icon: Megaphone },
     { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { to: '/ai-insights', label: 'AI Insights', icon: Brain },
     { to: '/showcase', label: 'Showcase Feed', icon: Globe },
@@ -44,6 +46,7 @@ export const Sidebar = () => {
     { to: '/project-review', label: 'Projects Portfolio', icon: ClipboardList },
     { to: '/staff-dashboard?tab=analytics', label: 'Cohort Analytics', icon: BarChart3 },
     { to: '/certificate-management', label: 'Certificates', icon: FileCheck },
+    { to: '/announcements', label: 'Placements', icon: Megaphone },
     { to: '/showcase', label: 'Showcase Feed', icon: Globe },
     { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   ];

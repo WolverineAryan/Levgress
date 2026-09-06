@@ -336,6 +336,17 @@ export const ProjectDetails = () => {
     }
   };
 
+  const handleCancelSubmission = async (milestoneId) => {
+    if (!window.confirm('Are you sure you want to cancel your submission? This will revert the milestone back to active for re-submission.')) return;
+    try {
+      await milestonesApi.cancelSubmission(milestoneId);
+      fetchDetails();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to cancel submission.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col space-y-4 animate-pulse">
@@ -619,6 +630,16 @@ export const ProjectDetails = () => {
                           className="text-xs px-3 py-1.5"
                         >
                           Submit Evidence
+                        </Button>
+                      )}
+
+                      {isSubmitted && isOwnProject && user?.role === 'STUDENT' && (
+                        <Button
+                          onClick={() => handleCancelSubmission(m._id)}
+                          variant="secondary"
+                          className="text-xs px-3 py-1.5 text-rose-400 hover:text-rose-300 border-rose-500/20"
+                        >
+                          Cancel Submission
                         </Button>
                       )}
 

@@ -155,7 +155,7 @@ export const SkillTester = () => {
       answers: finalAnswers,
     }));
 
-    // Calculate score
+    // Calculate score for 10 questions
     let score = 0;
     activeQuiz.questions.forEach((q, idx) => {
       if (q.answerIndex === finalAnswers[idx]) {
@@ -163,7 +163,7 @@ export const SkillTester = () => {
       }
     });
 
-    const passed = score >= 2;
+    const passed = score >= 7;
 
     try {
       const res = await studentsApi.submitSkillTest(
@@ -217,7 +217,7 @@ export const SkillTester = () => {
 
   // Render Immersive Quiz Screen
   if (activeQuiz) {
-    const { skillName, tier, questions, currentIdx, selectedAnswer, status, score, xpReward } = activeQuiz;
+    const { skillName, tier, questions, currentIdx, selectedAnswer, answers, status, score, xpReward } = activeQuiz;
 
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4 select-none relative">
@@ -247,9 +247,9 @@ export const SkillTester = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <h3 className="text-lg font-extrabold text-text-primary animate-pulse">Tailoring custom questions...</h3>
+                  <h3 className="text-lg font-extrabold text-text-primary animate-pulse">Tailoring 10 custom questions...</h3>
                   <p className="text-xs text-text-secondary max-w-sm">
-                    AI Mentor is fetching 3 multiple-choice challenges for <span className="text-accent-primary font-semibold">{skillName}</span> at the <span className="text-text-primary font-bold">{tier}</span> tier.
+                    AI Mentor is generating 10 multiple-choice challenges for <span className="text-accent-primary font-semibold">{skillName}</span> at the <span className="text-text-primary font-bold">{tier}</span> tier.
                   </p>
                 </div>
               </motion.div>
@@ -300,40 +300,40 @@ export const SkillTester = () => {
                   </h4>
                 </div>
 
-                {/* Options */}
-                <div className="grid grid-cols-1 gap-3">
-                  {questions[currentIdx].options.map((opt, oIdx) => {
-                    const isSelected = selectedAnswer === oIdx;
+                {/* Options List */}
+                <div className="space-y-2.5">
+                  {questions[currentIdx].options.map((opt, optIdx) => {
+                    const isSelected = selectedAnswer === optIdx;
                     return (
                       <div
-                        key={oIdx}
-                        onClick={() => handleSelectOption(oIdx)}
-                        className={`p-4 rounded-xl border text-xs cursor-pointer transition-all flex items-center justify-between ${
+                        key={optIdx}
+                        onClick={() => handleSelectOption(optIdx)}
+                        className={`p-3.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all flex items-center justify-between ${
                           isSelected
-                            ? 'border-accent-primary bg-accent-primary/[0.03] text-text-primary font-semibold shadow-md shadow-accent-primary/5'
-                            : 'border-border-subtle hover:border-text-secondary text-text-secondary bg-bg-card/40'
+                            ? 'bg-accent-primary/10 border-accent-primary text-accent-primary shadow-sm'
+                            : 'bg-bg-elevated/40 border-border-subtle text-text-secondary hover:border-border-primary hover:text-text-primary'
                         }`}
                       >
                         <span>{opt}</span>
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
-                          isSelected ? 'border-accent-primary bg-accent-primary' : 'border-border-subtle'
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                          isSelected ? 'border-accent-primary bg-accent-primary text-bg-primary' : 'border-border-subtle'
                         }`}>
-                          {isSelected && <Check className="w-2.5 h-2.5 text-bg-primary stroke-[3]" />}
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Footer Controls */}
-                <div className="pt-4 flex justify-end">
+                {/* Next Button */}
+                <div className="flex justify-end pt-4 border-t border-border-subtle">
                   <Button
                     onClick={handleNextQuestion}
                     disabled={selectedAnswer === null}
-                    className="flex items-center gap-1 text-xs px-6 py-2 cursor-pointer"
+                    className="text-xs px-6 py-2.5 flex items-center gap-2"
                   >
-                    {currentIdx === questions.length - 1 ? 'Submit Test' : 'Next Question'}
-                    <ArrowRight size={14} />
+                    <span>{currentIdx === questions.length - 1 ? 'Submit Test' : 'Next Question'}</span>
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </motion.div>
@@ -348,81 +348,103 @@ export const SkillTester = () => {
                 className="flex flex-col items-center justify-center py-12 text-center space-y-6"
               >
                 <div className="w-12 h-12 rounded-full border-2 border-accent-primary/20 border-t-accent-primary animate-spin" />
-                <h3 className="text-sm font-bold text-text-primary animate-pulse">Grading responses...</h3>
+                <h3 className="text-sm font-bold text-text-primary animate-pulse">Grading 10 responses...</h3>
               </motion.div>
             )}
 
-            {status === 'success' && (
+            {(status === 'success' || status === 'failure') && (
               <motion.div
-                key="success"
+                key="result"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex flex-col items-center justify-center py-8 text-center space-y-6"
+                className="flex flex-col space-y-6"
               >
-                <div className="w-16 h-16 rounded-full bg-status-success/10 border border-status-success/20 flex items-center justify-center text-status-success relative">
-                  <Award className="w-8 h-8" />
-                  <motion.div
-                    className="absolute -top-1 -right-1 text-status-warning"
-                    animate={{ y: [-5, 5, -5] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                  </motion.div>
-                </div>
+                {/* Result Banner */}
+                <div className="flex flex-col items-center text-center space-y-4 py-4 border-b border-border-subtle">
+                  <div className={`w-16 h-16 rounded-full border flex items-center justify-center ${
+                    status === 'success'
+                      ? 'bg-status-success/10 border-status-success/20 text-status-success'
+                      : 'bg-status-danger/10 border-status-danger/20 text-status-danger'
+                  }`}>
+                    {status === 'success' ? <Award className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
+                  </div>
 
-                <div className="space-y-1">
-                  <h3 className="text-lg font-black text-text-primary">Tier Unlocked!</h3>
-                  <p className="text-xs text-text-secondary">
-                    You passed the <span className="font-bold">{skillName}</span> {tier} test with a score of <span className="text-status-success font-extrabold">{score}/3</span>.
-                  </p>
-                </div>
+                  <div>
+                    <h3 className="text-lg font-black text-text-primary">
+                      {status === 'success' ? 'Tier Unlocked!' : 'Test Not Passed'}
+                    </h3>
+                    <p className="text-xs text-text-secondary mt-1">
+                      You scored <span className={`font-extrabold ${status === 'success' ? 'text-status-success' : 'text-status-danger'}`}>{score}/10</span> on the <span className="font-bold">{skillName}</span> {tier} test.
+                      {status === 'success' ? ` (+${xpReward} XP)` : ' (Passing score: 7/10)'}
+                    </p>
+                  </div>
 
-                <div className="bg-status-success/5 border border-status-success/15 rounded-xl px-5 py-3 flex items-center gap-3">
-                  <span className="text-2xl font-black text-status-success">+{xpReward}</span>
-                  <div className="text-left leading-none">
-                    <span className="text-[10px] font-black text-text-primary uppercase tracking-wider block">XP Awarded</span>
-                    <span className="text-[9px] text-text-muted mt-0.5 block">Tier progress saved</span>
+                  <div className="flex gap-3 pt-2">
+                    <Button variant="ghost" onClick={quitQuiz} className="text-xs px-5 py-2 cursor-pointer">
+                      Close
+                    </Button>
+                    <Button onClick={() => startQuiz(skillName, tier)} className="text-xs px-6 py-2 cursor-pointer">
+                      Retry Test
+                    </Button>
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3">
-                  <Button onClick={quitQuiz} className="text-xs px-6 py-2.5 cursor-pointer">
-                    Back to Portfolio
-                  </Button>
-                </div>
-              </motion.div>
-            )}
+                {/* Comprehensive Question & Explanation Review Section */}
+                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
+                  <h4 className="text-xs font-extrabold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-accent-primary" /> Question Review & Explanations
+                  </h4>
 
-            {status === 'failure' && (
-              <motion.div
-                key="failure"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="flex flex-col items-center justify-center py-8 text-center space-y-6"
-              >
-                <div className="w-16 h-16 rounded-full bg-status-danger/10 border border-status-danger/20 flex items-center justify-center text-status-danger">
-                  <AlertTriangle className="w-8 h-8" />
-                </div>
+                  {questions.map((q, qIdx) => {
+                    const userPick = answers[qIdx];
+                    const isCorrect = userPick === q.answerIndex;
 
-                <div className="space-y-1">
-                  <h3 className="text-lg font-black text-text-primary">Keep Studying</h3>
-                  <p className="text-xs text-text-secondary">
-                    You scored <span className="text-status-danger font-extrabold">{score}/3</span> on the <span className="font-bold">{skillName}</span> {tier} test.
-                  </p>
-                  <p className="text-[10px] text-text-muted max-w-xs mx-auto mt-1 leading-normal">
-                    You need to answer at least 2 out of 3 questions correctly to level up. Review the materials and try again.
-                  </p>
-                </div>
+                    return (
+                      <div key={qIdx} className={`p-4 rounded-xl border text-xs space-y-2.5 ${
+                        isCorrect ? 'bg-status-success/5 border-status-success/20' : 'bg-status-danger/5 border-status-danger/20'
+                      }`}>
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="font-bold text-text-primary">
+                            Q{qIdx + 1}. {q.question}
+                          </span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded shrink-0 ${
+                            isCorrect ? 'bg-status-success/20 text-status-success' : 'bg-status-danger/20 text-status-danger'
+                          }`}>
+                            {isCorrect ? '✓ Correct' : '✕ Incorrect'}
+                          </span>
+                        </div>
 
-                <div className="pt-4 flex gap-3">
-                  <Button variant="ghost" onClick={quitQuiz} className="text-xs px-5 py-2.5 cursor-pointer">
-                    Cancel
-                  </Button>
-                  <Button onClick={() => startQuiz(skillName, tier)} className="text-xs px-6 py-2.5 cursor-pointer">
-                    Retry Test
-                  </Button>
+                        <div className="space-y-1 pl-2">
+                          {q.options.map((opt, optIdx) => {
+                            const isUserSelected = userPick === optIdx;
+                            const isAnswer = q.answerIndex === optIdx;
+
+                            return (
+                              <div key={optIdx} className={`p-2 rounded text-[11px] flex items-center justify-between ${
+                                isAnswer
+                                  ? 'bg-status-success/15 text-status-success font-bold border border-status-success/30'
+                                  : isUserSelected
+                                    ? 'bg-status-danger/15 text-status-danger font-bold border border-status-danger/30'
+                                    : 'text-text-secondary'
+                              }`}>
+                                <span>{opt}</span>
+                                {isAnswer && <Check className="w-3.5 h-3.5 text-status-success" />}
+                                {isUserSelected && !isAnswer && <X className="w-3.5 h-3.5 text-status-danger" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Short Explanation Box */}
+                        {q.explanation && (
+                          <div className="p-2.5 rounded bg-bg-elevated/70 border border-border-subtle text-[11px] text-text-secondary leading-relaxed">
+                            <strong className="text-accent-primary">Explanation:</strong> {q.explanation}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}

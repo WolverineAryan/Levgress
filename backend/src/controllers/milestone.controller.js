@@ -41,8 +41,21 @@ const staffRejectMilestone = asyncHandler(async (req, res) => {
   });
 });
 
+const cancelSubmission = asyncHandler(async (req, res) => {
+  const milestone = await milestoneService.cancelSubmission(
+    req.params.id,
+    req.user._id
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: { milestone },
+  });
+});
+
 module.exports = {
   submitEvidence,
+  cancelSubmission,
   staffApproveMilestone,
   staffRejectMilestone,
 };

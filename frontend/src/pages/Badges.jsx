@@ -53,6 +53,10 @@ export const Badges = () => {
 
   // Count earned badges
   const earnedCount = badges.filter((b) => b.isEarned).length;
+  const sortedBadges = [...badges].sort((a, b) => {
+    if (a.isEarned === b.isEarned) return 0;
+    return a.isEarned ? -1 : 1;
+  });
 
   return (
     <div className="flex flex-col space-y-8 select-none">
@@ -66,7 +70,7 @@ export const Badges = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {badges.map((b) => {
+        {sortedBadges.map((b) => {
           const Icon = BADGE_ICONS[b.icon] || Award;
           const isEarned = b.isEarned;
 

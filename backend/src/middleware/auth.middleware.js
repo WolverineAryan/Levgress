@@ -4,6 +4,8 @@ const User = require('../models/User');
 const { AuthError, ForbiddenError } = require('../utils/AppError');
 const asyncHandler = require('./asyncHandler');
 
+const gamificationService = require('../services/gamification.service');
+
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -28,6 +30,12 @@ const protect = asyncHandler(async (req, res, next) => {
 
     // Attach user to request
     req.user = user;
+
+    // Real-time student streak update
+    if (user.role === 'STUDENT') {
+      gamificationService.updateStreak(user._id).catch(() => {});
+    }
+
     next();
   } catch (error) {
     throw new AuthError('Not authorized. Token is invalid or expired.');

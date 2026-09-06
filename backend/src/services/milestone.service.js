@@ -318,8 +318,33 @@ const staffRejectMilestone = async (milestoneId, staffId, feedback = '') => {
   return milestone;
 };
 
+const cancelSubmission = async (milestoneId, studentId) => {
+  const milestone = await Milestone.findById(milestoneId);
+  if (!milestone) {
+    throw new NotFoundError('Milestone not found');
+  }
+
+  const project = await Project.findById(milestone.project);
+  if (!project || project.student.toString() !== studentId.toString()) {
+    throw new ForbiddenError('You are not authorized to cancel submission for this milestone');
+  }
+
+  if (milestone.status !== 'SUBMITTED') {
+    throw new ValidationError('Only SUBMITTED milestones can be canceled');
+  }
+
+  milestone.status = 'ACTIVE';
+  milestone.evidence = null;
+  milestone.aiFeedback = 'Submission canceled by student. Ready for re-submission.';
+  milestone.aiScore = null;
+  await milestone.save();
+
+  return milestone;
+};
+
 module.exports = {
   submitEvidence,
+  cancelSubmission,
   staffApproveMilestone,
   staffRejectMilestone,
 };
