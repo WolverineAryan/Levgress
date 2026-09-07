@@ -12,7 +12,7 @@ if (config.groqApiKey) {
       baseURL: 'https://api.groq.com/openai/v1',
       timeout: 15000,
     });
-    logger.info(`[AI Quiz] Groq client initialized with model: ${config.groqModel || 'qwen/qwen3.8-27b'}`);
+    logger.info('[AI Quiz] Groq client initialized with model: openai/gpt-oss-120b');
   } catch (error) {
     logger.error('[AI Quiz] Error initializing Groq client:', error);
   }
@@ -37,7 +37,7 @@ const callLlmForQuiz = async (client, modelName, prompt, engineName) => {
     messages: [
       {
         role: 'system',
-        content: 'You are an expert technical examiner. Return ONLY a valid JSON array of 10 question objects. Do not use markdown code blocks or explanations.',
+        content: 'You are an expert technical examiner. Return ONLY a valid JSON array containing EXACTLY 10 question objects. Do not wrap in markdown code blocks or add preamble.',
       },
       {
         role: 'user',
@@ -45,7 +45,7 @@ const callLlmForQuiz = async (client, modelName, prompt, engineName) => {
       },
     ],
     temperature: 0.6,
-    max_tokens: 1000,
+    max_tokens: 2200,
   });
 
   let rawContent = response.choices[0]?.message?.content?.trim() || '';
@@ -66,7 +66,7 @@ const callLlmForQuiz = async (client, modelName, prompt, engineName) => {
   if (Array.isArray(parsed) && parsed.length >= 10) {
     logger.info(`[AI Quiz] Successfully generated 10 dynamic questions via ${engineName} (${modelName})`);
     return parsed.slice(0, 10).map((q, idx) => ({
-      question: q.question || `Q${idx + 1}. Practical scenario testing ${modelName}`,
+      question: q.question || `Q${idx + 1}. Practical scenario question for ${modelName}`,
       options: Array.isArray(q.options) && q.options.length === 4 ? q.options : [
         'Option A',
         'Option B',
@@ -81,28 +81,40 @@ const callLlmForQuiz = async (client, modelName, prompt, engineName) => {
 };
 
 const generateTenAIQuestions = async (skillName, tier) => {
-  const prompt = `Create a 10-question technical test for "${skillName}" (${tier}).
-Return ONLY a JSON array with 10 items in this exact structure:
+  const prompt = `Create a 10-question multiple-choice technical skill test on "${skillName}" at the "${tier}" difficulty level.
+
+Return ONLY a raw JSON array of 10 question objects following this exact schema:
 [
   {
-    "question": "Clear technical question on ${skillName}",
-    "options": ["Opt A", "Opt B", "Opt C", "Opt D"],
+    "question": "Clear, practical technical question testing ${skillName} (${tier})",
+    "options": [
+      "Option 1",
+      "Option 2",
+      "Option 3",
+      "Option 4"
+    ],
     "answerIndex": 0,
-    "explanation": "Brief 1-sentence explanation"
+    "explanation": "Clear 1-sentence explanation of why the correct option is right"
   }
 ]
-Rules:
-1. 10 distinct, non-repeating questions testing practical knowledge.
-2. 4 realistic options per question with randomized answerIndex (0-3).
-3. Keep questions concise. Output raw JSON array only.`;
 
-  // 1. Try Groq (Ultra-fast)
+Rules:
+1. Generate EXACTLY 10 distinct, non-repeating questions testing real code syntax, algorithms, or architecture.
+2. Ensure options are realistic and distinct.
+3. Randomize answerIndex across 0, 1, 2, and 3.
+4. Output ONLY the raw JSON array.`;
+
+  // 1. Try Groq with openai/gpt-oss-120b (fast, high token capacity)
   if (groqClient) {
     try {
-      const model = config.groqModel || 'qwen/qwen3.8-27b';
-      return await callLlmForQuiz(groqClient, model, prompt, 'Groq');
+      return await callLlmForQuiz(groqClient, 'openai/gpt-oss-120b', prompt, 'Groq');
     } catch (err) {
-      logger.warn(`[AI Quiz] Groq attempt failed: ${err.message}. Trying NVIDIA NIM...`);
+      logger.warn(`[AI Quiz] Groq primary attempt failed: ${err.message}. Trying Groq secondary (qwen)...`);
+      try {
+        return await callLlmForQuiz(groqClient, 'qwen/qwen3.8-27b', prompt, 'Groq');
+      } catch (err2) {
+        logger.warn(`[AI Quiz] Groq secondary failed: ${err2.message}. Trying NVIDIA NIM...`);
+      }
     }
   }
 
