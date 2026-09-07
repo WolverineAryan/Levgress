@@ -31,6 +31,12 @@ if (config.nvidiaApiKey) {
   }
 }
 
+const cleanQuestionText = (text) => {
+  if (!text || typeof text !== 'string') return '';
+  // Strip leading "Q1. ", "Q1: ", "1. ", "1: ", etc.
+  return text.trim().replace(/^(Q\d+[:.]?\s*|\d+[:.]?\s*)+/i, '').trim();
+};
+
 const callLlmForQuiz = async (client, modelName, prompt, engineName) => {
   const response = await client.chat.completions.create({
     model: modelName,
@@ -66,15 +72,15 @@ const callLlmForQuiz = async (client, modelName, prompt, engineName) => {
   if (Array.isArray(parsed) && parsed.length >= 10) {
     logger.info(`[AI Quiz] Successfully generated 10 dynamic questions via ${engineName} (${modelName})`);
     return parsed.slice(0, 10).map((q, idx) => ({
-      question: q.question || `Q${idx + 1}. Practical scenario question for ${modelName}`,
-      options: Array.isArray(q.options) && q.options.length === 4 ? q.options : [
+      question: cleanQuestionText(q.question) || `Practical scenario question ${idx + 1}`,
+      options: Array.isArray(q.options) && q.options.length === 4 ? q.options.map(o => String(o).trim()) : [
         'Option A',
         'Option B',
         'Option C',
         'Option D'
       ],
       answerIndex: typeof q.answerIndex === 'number' && q.answerIndex >= 0 && q.answerIndex <= 3 ? q.answerIndex : 0,
-      explanation: q.explanation || 'Standard industry best practice.'
+      explanation: q.explanation ? String(q.explanation).trim() : 'Standard industry best practice.'
     }));
   }
   throw new Error('Parsed response does not contain at least 10 questions');
@@ -102,7 +108,8 @@ Rules:
 1. Generate EXACTLY 10 distinct, non-repeating questions testing real code syntax, algorithms, or architecture.
 2. Ensure options are realistic and distinct.
 3. Randomize answerIndex across 0, 1, 2, and 3.
-4. Output ONLY the raw JSON array.`;
+4. Do NOT include question number prefixes (like "Q1." or "1.") in the question string.
+5. Output ONLY the raw JSON array.`;
 
   // 1. Try Groq with openai/gpt-oss-120b (fast, high token capacity)
   if (groqClient) {
@@ -147,8 +154,8 @@ const generateFallbackQuestions = (skillName, tier) => {
     { topic: 'Deployment & Production Ops', desc: 'environment configuration, build pipelines, and production monitoring' }
   ];
 
-  return topics.map((t, idx) => ({
-    question: `Q${idx + 1}. In ${skillName} (${tier}), what is the recommended practice regarding ${t.topic.toLowerCase()}?`,
+  return topics.map((t) => ({
+    question: `In ${skillName} (${tier}), what is the recommended practice regarding ${t.topic.toLowerCase()}?`,
     options: [
       `Follow standard modular patterns focusing on ${t.desc} for ${skillName}`,
       `Bypassing runtime validation checks to increase execution speed`,
